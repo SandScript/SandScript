@@ -136,16 +136,17 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 		return new IfAst( ifAst.StartLocation, newBooleanExpression, (NestedScopeAst)trueBranch, falseBranch );
 	}
 
-	// If boolean expression is always false, remove it.
 	protected override Ast VisitFor( ForAst forAst )
 	{
 		var newBooleanExpression = Visit( forAst.BooleanExpression );
-		var newIterator = Visit( forAst.Iterator );
+		if ( newBooleanExpression is LiteralAst literalAst && !(bool)literalAst.Value )
+			return AddChange( new NoOperationAst( forAst.StartLocation ) );
+		
 		var newCompound = Visit( forAst.Compound );
-
 		if ( newCompound is NoOperationAst )
 			return AddChange( new NoOperationAst( forAst.StartLocation ) );
 
+		var newIterator = Visit( forAst.Iterator );
 		return new ForAst( forAst.StartLocation, forAst.VariableDeclaration, newBooleanExpression,
 			(AssignmentAst)newIterator, (NestedScopeAst)newCompound );
 	}
