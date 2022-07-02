@@ -121,13 +121,15 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 		return AddChange( new LiteralAst( newToken, literalAst.TypeProvider ) );
 	}
 
-	// If boolean expression is always false, remove it.
 	protected override Ast VisitIf( IfAst ifAst )
 	{
 		var newBooleanExpression = Visit( ifAst.BooleanExpression );
-		var trueBranch = Visit( ifAst.TrueBranch );
 		var falseBranch = Visit( ifAst.FalseBranch );
-
+		
+		if ( newBooleanExpression is LiteralAst literalAst && !(bool)literalAst.Value )
+			return AddChange( falseBranch );
+		
+		var trueBranch = Visit( ifAst.TrueBranch );
 		if ( trueBranch is NoOperationAst && falseBranch is NoOperationAst )
 			return AddChange( new NoOperationAst( ifAst.StartLocation ) );
 		
