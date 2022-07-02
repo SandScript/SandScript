@@ -91,18 +91,6 @@ public sealed class Parser : IStage
 		NextToken();
 	}
 
-	private CompoundStatementAst CompoundStatement()
-	{
-		var startLocation = CurrentToken.Location;
-		EatToken( TokenType.LeftCurlyBracket );
-		var statements = ImmutableArray<Ast>.Empty;
-		if ( CurrentToken.Type != TokenType.RightCurlyBracket )
-			statements = StatementList();
-		EatToken( TokenType.RightCurlyBracket );
-
-		return new CompoundStatementAst( startLocation, statements );
-	}
-
 	private BlockAst BlockStatement()
 	{
 		var startLocation = CurrentToken.Location;
@@ -249,7 +237,7 @@ public sealed class Parser : IStage
 		}
 		EatToken( TokenType.RightParenthesis );
 
-		return new MethodDeclarationAst( returnType, methodName, parameters, CompoundStatement() );
+		return new MethodDeclarationAst( returnType, methodName, parameters, BlockStatement() );
 	}
 	
 	private MethodCallAst MethodCallStatement()

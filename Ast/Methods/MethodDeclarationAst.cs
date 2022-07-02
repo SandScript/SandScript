@@ -7,17 +7,17 @@ public sealed class MethodDeclarationAst : Ast
 	public readonly VariableTypeAst ReturnType;
 	public readonly VariableAst MethodNameVariable;
 	public readonly List<VariableDeclarationAst> Parameters;
-	public readonly CompoundStatementAst Compound;
+	public readonly BlockAst Scope;
 
 	public readonly string MethodName;
 
 	public MethodDeclarationAst( VariableTypeAst returnType, VariableAst methodNameVariable, List<VariableDeclarationAst> parameters,
-		CompoundStatementAst compound ) : base( returnType.Token.Location )
+		BlockAst scope ) : base( returnType.Token.Location )
 	{
 		ReturnType = returnType;
 		MethodNameVariable = methodNameVariable;
 		Parameters = parameters;
-		Compound = compound;
+		Scope = scope;
 
 		MethodName = (string)MethodNameVariable.Token.Value;
 	}
@@ -46,7 +46,7 @@ public sealed class MethodDeclarationAst : Ast
 			sb.Append( '\n' );
 		}
 
-		sb.Append( Compound.Dump( newIndent ) );
+		sb.Append( Scope.Dump( newIndent ) );
 		
 		return sb.ToString();
 	}

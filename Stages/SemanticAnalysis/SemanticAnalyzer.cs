@@ -82,8 +82,6 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		_neededTypes.AssertTypeCheckLoose( type, out expectedType );
 
 	protected override ITypeProvider VisitProgram( ProgramAst programAst ) => Visit( programAst.Compound );
-
-	protected override ITypeProvider VisitCompoundStatement( CompoundStatementAst compoundStatementAst )
 	{
 		var result = TypeProviders.Builtin.Nothing;
 		foreach ( var statement in compoundStatementAst.Statements )
@@ -244,7 +242,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		EnterScope( $"Method - {methodSignature}", null );
 		foreach ( var parameter in methodDeclarationAst.Parameters )
 			Visit( parameter );
-		VisitExpectingType( methodDeclarationAst.ReturnType.TypeProvider, methodDeclarationAst.Compound );
+		VisitExpectingType( methodDeclarationAst.ReturnType.TypeProvider, methodDeclarationAst.Scope );
 		LeaveScope();
 			
 		return TypeProviders.Builtin.Nothing;

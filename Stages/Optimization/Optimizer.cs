@@ -57,8 +57,6 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 			? AddChange( new NoOperationAst( programAst.StartLocation ) )
 			: new ProgramAst( (CompoundStatementAst)newCompound );
 	}
-	
-	protected override Ast VisitCompoundStatement( CompoundStatementAst compoundStatementAst )
 	{
 		var newStatements = ImmutableArray.CreateBuilder<Ast>();
 		foreach ( var statement in compoundStatementAst.Statements )
@@ -179,13 +177,12 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 	// If method is unused and not global. Remove it.
 	protected override Ast VisitMethodDeclaration( MethodDeclarationAst methodDeclarationAst )
 	{
-		var newCompound = Visit( methodDeclarationAst.Compound );
-
-		if ( newCompound is not NoOperationAst )
+		var newScope = Visit( methodDeclarationAst.Scope );
+		if ( newScope is not NoOperationAst )
 		{
 			return new MethodDeclarationAst( methodDeclarationAst.ReturnType,
 				methodDeclarationAst.MethodNameVariable, methodDeclarationAst.Parameters,
-				(CompoundStatementAst)newCompound );
+				(BlockAst)newScope );
 		}
 
 		_removedMethods.Current.Set( MethodSignature.From( methodDeclarationAst ), true );

@@ -11,7 +11,6 @@ public abstract class NodeVisitor<T>
 		var result = node switch
 		{
 			ProgramAst p => VisitProgram( p ),
-			CompoundStatementAst cs => VisitCompoundStatement( cs ),
 			BlockAst ns => VisitBlock( ns ),
 			ReturnAst r => VisitReturn( r ),
 			
@@ -48,7 +47,6 @@ public abstract class NodeVisitor<T>
 	protected virtual void PostVisit( Ast node, T result ) { }
 
 	protected abstract T VisitProgram( ProgramAst programAst );
-	protected abstract T VisitCompoundStatement( CompoundStatementAst compoundStatementAst );
 	protected abstract T VisitBlock( BlockAst blockAst );
 	protected abstract T VisitReturn( ReturnAst returnAst );
 	

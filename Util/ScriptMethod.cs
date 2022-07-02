@@ -84,7 +84,7 @@ public class ScriptMethod
 				parameters.Add( Parameters[i].Item1, values[i] );
 			
 			interpreter.Variables.Enter( "Method", parameters );
-			var result = interpreter.Visit( MethodDeclarationAst!.Compound );
+			var result = interpreter.Visit( MethodDeclarationAst!.Scope );
 			interpreter.Variables.Leave();
 			return result;
 		}

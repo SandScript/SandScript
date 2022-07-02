@@ -62,8 +62,6 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	private object? Interpret( Ast ast ) => Visit( ast );
 
 	protected override object? VisitProgram( ProgramAst programAst ) => Visit( programAst.Compound );
-
-	protected override object? VisitCompoundStatement( CompoundStatementAst compoundStatementAst )
 	{
 		foreach ( var statement in compoundStatementAst.Statements )
 		{
