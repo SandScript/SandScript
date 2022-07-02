@@ -163,12 +163,14 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 			: new WhileAst( whileAst.StartLocation, newBooleanExpression, (NestedScopeAst)newCompound );
 	}
 
-	// If boolean expression is always false, replace do while with the compound.
 	protected override Ast VisitDoWhile( DoWhileAst doWhileAst )
 	{
 		var newBooleanExpression = Visit( doWhileAst.BooleanExpression );
 		var newCompound = Visit( doWhileAst.Compound );
 
+		if ( newBooleanExpression is LiteralAst literalAst && !(bool)literalAst.Value )
+			return AddChange( newCompound );
+		
 		return newCompound is NoOperationAst
 			? AddChange( new NoOperationAst( doWhileAst.StartLocation ) )
 			: new DoWhileAst( doWhileAst.StartLocation, newBooleanExpression, (NestedScopeAst)newCompound );
