@@ -151,12 +151,13 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 			(AssignmentAst)newIterator, (NestedScopeAst)newCompound );
 	}
 
-	// If boolean expression is always false, remove it.
 	protected override Ast VisitWhile( WhileAst whileAst )
 	{
 		var newBooleanExpression = Visit( whileAst.BooleanExpression );
+		if ( newBooleanExpression is LiteralAst literalAst && !(bool)literalAst.Value )
+			return AddChange( new NoOperationAst( whileAst.StartLocation ) );
+		
 		var newCompound = Visit( whileAst.Compound );
-
 		return newCompound is NoOperationAst
 			? AddChange( new NoOperationAst( whileAst.StartLocation ) )
 			: new WhileAst( whileAst.StartLocation, newBooleanExpression, (NestedScopeAst)newCompound );
