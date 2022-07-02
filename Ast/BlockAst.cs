@@ -3,11 +3,11 @@ using System.Text;
 
 namespace SandScript.AbstractSyntaxTrees;
 
-public sealed class NestedScopeAst : Ast
+public sealed class BlockAst : Ast
 {
 	public readonly ImmutableArray<Ast> Statements;
 
-	public NestedScopeAst( TokenLocation location, ImmutableArray<Ast> statements ) : base( location )
+	public BlockAst( TokenLocation location, ImmutableArray<Ast> statements ) : base( location )
 	{
 		Statements = statements;
 	}
@@ -16,7 +16,7 @@ public sealed class NestedScopeAst : Ast
 	{
 		var sb = new StringBuilder();
 		sb.Append( indent );
-		sb.Append( "Compound Statement @ " );
+		sb.Append( "Block @ " );
 		sb.Append( StartLocation );
 		sb.Append( " (" );
 		sb.Append( Statements.Length );

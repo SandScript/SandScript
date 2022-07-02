@@ -12,7 +12,7 @@ public abstract class NodeVisitor<T>
 		{
 			ProgramAst p => VisitProgram( p ),
 			CompoundStatementAst cs => VisitCompoundStatement( cs ),
-			NestedScopeAst ns => VisitNestedScope( ns ),
+			BlockAst ns => VisitBlock( ns ),
 			ReturnAst r => VisitReturn( r ),
 			
 			AssignmentAst a => VisitAssignment( a ),
@@ -49,7 +49,7 @@ public abstract class NodeVisitor<T>
 
 	protected abstract T VisitProgram( ProgramAst programAst );
 	protected abstract T VisitCompoundStatement( CompoundStatementAst compoundStatementAst );
-	protected abstract T VisitNestedScope( NestedScopeAst nestedScopeAst );
+	protected abstract T VisitBlock( BlockAst blockAst );
 	protected abstract T VisitReturn( ReturnAst returnAst );
 	
 	protected abstract T VisitAssignment( AssignmentAst assignmentAst );

@@ -99,10 +99,10 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		return result;
 	}
 
-	protected override ITypeProvider VisitNestedScope( NestedScopeAst nestedScopeAst )
+	protected override ITypeProvider VisitBlock( BlockAst blockAst )
 	{
-		EnterScope( "NestedScope", null );
-		foreach ( var statement in nestedScopeAst.Statements )
+		EnterScope( "Block", null );
+		foreach ( var statement in blockAst.Statements )
 		{
 			var value = Visit( statement );
 			if ( value == TypeProviders.Builtin.Nothing )
@@ -210,7 +210,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		EnterScope( "InternalFor", null );
 		VisitExpectingType( TypeProviders.Builtin.Number, forAst.VariableDeclaration );
 		VisitExpectingType( TypeProviders.Builtin.Boolean, forAst.BooleanExpression );
-		var result = Visit( forAst.Compound );
+		var result = Visit( forAst.Block );
 		LeaveScope();
 
 		return result;
@@ -219,13 +219,13 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	protected override ITypeProvider VisitWhile( WhileAst whileAst )
 	{
 		VisitExpectingType( TypeProviders.Builtin.Boolean, whileAst.BooleanExpression );
-		return Visit( whileAst.Compound );
+		return Visit( whileAst.Block );
 	}
 
 	protected override ITypeProvider VisitDoWhile( DoWhileAst doWhileAst )
 	{
 		VisitExpectingType( TypeProviders.Builtin.Boolean, doWhileAst.BooleanExpression );
-		return Visit( doWhileAst.Compound );
+		return Visit( doWhileAst.Block );
 	}
 
 	protected override ITypeProvider VisitMethodDeclaration( MethodDeclarationAst methodDeclarationAst )

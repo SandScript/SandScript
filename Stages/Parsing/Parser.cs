@@ -103,14 +103,14 @@ public sealed class Parser : IStage
 		return new CompoundStatementAst( startLocation, statements );
 	}
 
-	private NestedScopeAst NestedScopeStatement()
+	private BlockAst BlockStatement()
 	{
 		var startLocation = CurrentToken.Location;
 		if ( CurrentToken.Type != TokenType.LeftCurlyBracket )
 		{
 			var firstStatement = ImmutableArray.CreateBuilder<Ast>();
 			firstStatement.Add( Statement() );
-			return new NestedScopeAst( startLocation, firstStatement.ToImmutable() );
+			return new BlockAst( startLocation, firstStatement.ToImmutable() );
 		}
 		
 		EatToken( TokenType.LeftCurlyBracket );
@@ -119,7 +119,7 @@ public sealed class Parser : IStage
 			statements = StatementList();
 		EatToken( TokenType.RightCurlyBracket );
 
-		return new NestedScopeAst( startLocation, statements );
+		return new BlockAst( startLocation, statements );
 	}
 	
 	private ImmutableArray<Ast> StatementList()
@@ -152,7 +152,7 @@ public sealed class Parser : IStage
 			TokenType.Identifier when PeekToken( 1 ).Type == TokenType.Identifier => VariableDeclarationStatement( true ),
 			TokenType.Identifier => AssignmentStatement(),
 			
-			TokenType.LeftCurlyBracket => NestedScopeStatement(),
+			TokenType.LeftCurlyBracket => BlockStatement(),
 			
 			TokenType.Whitespace => Whitespace(),
 			TokenType.Comment => Comment(),
@@ -181,14 +181,14 @@ public sealed class Parser : IStage
 		var expression = Expression();
 		EatToken( TokenType.RightParenthesis );
 		
-		var trueCompound = NestedScopeStatement();
+		var trueBlock = BlockStatement();
 		EatToken( TokenType.SemiColon );
-		var falseCompound = Empty();
+		var falseBlock = Empty();
 		if ( CurrentToken.Type != TokenType.Else )
-			return new IfAst( startLocation, expression, trueCompound, falseCompound );
+			return new IfAst( startLocation, expression, trueBlock, falseBlock );
 
 		EatToken( TokenType.Else );
-		return new IfAst( startLocation, expression, trueCompound, NestedScopeStatement() );
+		return new IfAst( startLocation, expression, trueBlock, BlockStatement() );
 	}
 
 	private ForAst ForStatement()
@@ -203,7 +203,7 @@ public sealed class Parser : IStage
 		var iterator = AssignmentStatement();
 		EatToken( TokenType.RightParenthesis );
 
-		return new ForAst( startLocation, forVar, booleanExpression, iterator, NestedScopeStatement() );
+		return new ForAst( startLocation, forVar, booleanExpression, iterator, BlockStatement() );
 	}
 	
 	private WhileAst WhileStatement()
@@ -214,21 +214,21 @@ public sealed class Parser : IStage
 		var expression = Expression();
 		EatToken( TokenType.RightParenthesis );
 		
-		return new WhileAst( startLocation, expression, NestedScopeStatement() );
+		return new WhileAst( startLocation, expression, BlockStatement() );
 	}
 
 	private DoWhileAst DoWhileStatement()
 	{
 		var startLocation = CurrentToken.Location;
 		EatToken( TokenType.Do );
-		var compound = NestedScopeStatement();
+		var block = BlockStatement();
 		
 		EatToken( TokenType.While );
 		EatToken( TokenType.LeftParenthesis );
 		var expression = Expression();
 		EatToken( TokenType.RightParenthesis );
 
-		return new DoWhileAst( startLocation, expression, compound );
+		return new DoWhileAst( startLocation, expression, block );
 	}
 	
 	private MethodDeclarationAst MethodDeclarationStatement()

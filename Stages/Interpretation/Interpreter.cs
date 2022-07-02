@@ -78,10 +78,10 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		return null;
 	}
 
-	protected override object? VisitNestedScope( NestedScopeAst nestedScopeAst )
+	protected override object? VisitBlock( BlockAst blockAst )
 	{
-		Variables.Enter( "NestedScope", null );
-		foreach ( var statement in nestedScopeAst.Statements )
+		Variables.Enter( "Block", null );
+		foreach ( var statement in blockAst.Statements )
 		{
 			var result = Visit( statement );
 			if ( !_returning )
@@ -149,8 +149,8 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		Visit( forAst.VariableDeclaration );
 		while ( (bool)Visit( forAst.BooleanExpression )! )
 		{
-			var result = Visit( forAst.Compound );
 			if ( !_returning )
+			var result = Visit( forAst.Block );
 			{
 				Visit( forAst.Iterator );
 				continue;
@@ -168,8 +168,8 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	{
 		while ( (bool)Visit( whileAst.BooleanExpression )! )
 		{
-			var result = Visit( whileAst.Compound );
 			if ( _returning )
+			var result = Visit( whileAst.Block );
 				return result;
 		}
 
@@ -180,8 +180,8 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	{
 		do
 		{
-			var result = Visit( doWhileAst.Compound );
 			if ( _returning )
+			var result = Visit( doWhileAst.Block );
 				return result;
 		} while ( (bool)Visit( doWhileAst.BooleanExpression )! );
 

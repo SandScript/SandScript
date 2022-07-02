@@ -5,12 +5,12 @@ namespace SandScript.AbstractSyntaxTrees;
 public sealed class DoWhileAst : Ast
 {
 	public readonly Ast BooleanExpression;
-	public readonly NestedScopeAst Compound;
+	public readonly BlockAst Block;
 
-	public DoWhileAst( TokenLocation location, Ast booleanExpression, NestedScopeAst compound ) : base( location )
+	public DoWhileAst( TokenLocation location, Ast booleanExpression, BlockAst block ) : base( location )
 	{
 		BooleanExpression = booleanExpression;
-		Compound = compound;
+		Block = block;
 	}
 
 	public override string Dump( string indent = "" )
@@ -25,7 +25,7 @@ public sealed class DoWhileAst : Ast
 		sb.Append( BooleanExpression.Dump( newIndent ) );
 		sb.Append( '\n' );
 
-		sb.Append( Compound.Dump( newIndent ) );
+		sb.Append( Block.Dump( newIndent ) );
 		
 		return sb.ToString();
 	}

@@ -73,10 +73,10 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 			: new CompoundStatementAst( compoundStatementAst.StartLocation, newStatements.ToImmutable() );
 	}
 
-	protected override Ast VisitNestedScope( NestedScopeAst nestedScopeAst )
+	protected override Ast VisitBlock( BlockAst blockAst )
 	{
 		var newStatements = ImmutableArray.CreateBuilder<Ast>();
-		foreach ( var statement in nestedScopeAst.Statements )
+		foreach ( var statement in blockAst.Statements )
 		{
 			var result = Visit( statement );
 			if ( result is not NoOperationAst )
@@ -84,8 +84,8 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 		}
 
 		return newStatements.Count == 0
-			? AddChange( new NoOperationAst( nestedScopeAst.StartLocation ) )
-			: new NestedScopeAst( nestedScopeAst.StartLocation, newStatements.ToImmutable() );
+			? AddChange( new NoOperationAst( blockAst.StartLocation ) )
+			: new BlockAst( blockAst.StartLocation, newStatements.ToImmutable() );
 	}
 
 	protected override Ast VisitReturn( ReturnAst returnAst ) =>
@@ -133,7 +133,7 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 		if ( trueBranch is NoOperationAst && falseBranch is NoOperationAst )
 			return AddChange( new NoOperationAst( ifAst.StartLocation ) );
 		
-		return new IfAst( ifAst.StartLocation, newBooleanExpression, (NestedScopeAst)trueBranch, falseBranch );
+		return new IfAst( ifAst.StartLocation, newBooleanExpression, (BlockAst)trueBranch, falseBranch );
 	}
 
 	protected override Ast VisitFor( ForAst forAst )
@@ -142,13 +142,13 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 		if ( newBooleanExpression is LiteralAst literalAst && !(bool)literalAst.Value )
 			return AddChange( new NoOperationAst( forAst.StartLocation ) );
 		
-		var newCompound = Visit( forAst.Compound );
-		if ( newCompound is NoOperationAst )
+		var newBlock = Visit( forAst.Block );
+		if ( newBlock is NoOperationAst )
 			return AddChange( new NoOperationAst( forAst.StartLocation ) );
 
 		var newIterator = Visit( forAst.Iterator );
 		return new ForAst( forAst.StartLocation, forAst.VariableDeclaration, newBooleanExpression,
-			(AssignmentAst)newIterator, (NestedScopeAst)newCompound );
+			(AssignmentAst)newIterator, (BlockAst)newBlock );
 	}
 
 	protected override Ast VisitWhile( WhileAst whileAst )
@@ -157,23 +157,23 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 		if ( newBooleanExpression is LiteralAst literalAst && !(bool)literalAst.Value )
 			return AddChange( new NoOperationAst( whileAst.StartLocation ) );
 		
-		var newCompound = Visit( whileAst.Compound );
-		return newCompound is NoOperationAst
+		var newBlock = Visit( whileAst.Block );
+		return newBlock is NoOperationAst
 			? AddChange( new NoOperationAst( whileAst.StartLocation ) )
-			: new WhileAst( whileAst.StartLocation, newBooleanExpression, (NestedScopeAst)newCompound );
+			: new WhileAst( whileAst.StartLocation, newBooleanExpression, (BlockAst)newBlock );
 	}
 
 	protected override Ast VisitDoWhile( DoWhileAst doWhileAst )
 	{
 		var newBooleanExpression = Visit( doWhileAst.BooleanExpression );
-		var newCompound = Visit( doWhileAst.Compound );
+		var newBlock = Visit( doWhileAst.Block );
 
 		if ( newBooleanExpression is LiteralAst literalAst && !(bool)literalAst.Value )
-			return AddChange( newCompound );
+			return AddChange( newBlock );
 		
-		return newCompound is NoOperationAst
+		return newBlock is NoOperationAst
 			? AddChange( new NoOperationAst( doWhileAst.StartLocation ) )
-			: new DoWhileAst( doWhileAst.StartLocation, newBooleanExpression, (NestedScopeAst)newCompound );
+			: new DoWhileAst( doWhileAst.StartLocation, newBooleanExpression, (BlockAst)newBlock );
 	}
 
 	// If method is unused and not global. Remove it.

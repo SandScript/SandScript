@@ -5,10 +5,10 @@ namespace SandScript.AbstractSyntaxTrees;
 public sealed class IfAst : Ast
 {
 	public readonly Ast BooleanExpression;
-	public readonly NestedScopeAst TrueBranch;
+	public readonly BlockAst TrueBranch;
 	public readonly Ast FalseBranch;
 
-	public IfAst( TokenLocation location, Ast booleanExpression, NestedScopeAst trueBranch, Ast falseBranch ) : base( location )
+	public IfAst( TokenLocation location, Ast booleanExpression, BlockAst trueBranch, Ast falseBranch ) : base( location )
 	{
 		BooleanExpression = booleanExpression;
 		TrueBranch = trueBranch;
