@@ -86,6 +86,8 @@ public class ScriptMethod
 			interpreter.Variables.Enter( "Method", parameters );
 			var result = interpreter.Visit( MethodDeclarationAst!.Scope );
 			interpreter.Variables.Leave();
+
+			interpreter.Returning = false;
 			return result;
 		}
 	}

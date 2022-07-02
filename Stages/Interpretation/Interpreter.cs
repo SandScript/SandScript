@@ -7,7 +7,7 @@ namespace SandScript;
 
 public sealed class Interpreter : NodeVisitor<object?>, IStage
 {
-	StageDiagnostics IStage.Diagnostics => _diagnostics;
+	StageDiagnostics IStage.Diagnostics => Diagnostics;
 	Type IStage.PrerequisiteStage => typeof(Optimizer);
 	Type? IStage.SortBeforeStage => null;
 	
@@ -15,9 +15,9 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 
 	internal readonly VariableManager<string, object?> Variables = new();
 	internal readonly VariableManager<MethodSignature, object?> MethodVariables = new();
-
-	private readonly InterpreterDiagnostics _diagnostics = new();
-	private bool _returning;
+	
+	internal readonly InterpreterDiagnostics Diagnostics = new();
+	internal bool Returning;
 
 	[UsedImplicitly]
 	private Interpreter()
@@ -49,7 +49,7 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 			var result = Interpret( ast );
 			
 			sw.Stop();
-			_diagnostics.Time( sw.Elapsed.TotalMilliseconds );
+			Diagnostics.Time( sw.Elapsed.TotalMilliseconds );
 			
 			return StageResult.Success( result );
 		}
@@ -66,10 +66,10 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		foreach ( var statement in programAst.Statements )
 		{
 			var result = Visit( statement );
-			if ( !_returning )
+			if ( !Returning )
 				continue;
 
-			_returning = false;
+			Returning = false;
 			Variables.Leave();
 			return result;
 		}
@@ -83,7 +83,7 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		foreach ( var statement in blockAst.Statements )
 		{
 			var result = Visit( statement );
-			if ( !_returning )
+			if ( !Returning )
 				continue;
 
 			Variables.Leave();
@@ -96,7 +96,7 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	
 	protected override object? VisitReturn( ReturnAst returnAst )
 	{
-		_returning = true;
+		Returning = true;
 		return Visit( returnAst.Expression );
 	}
 	
@@ -148,8 +148,8 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		Visit( forAst.VariableDeclaration );
 		while ( (bool)Visit( forAst.BooleanExpression )! )
 		{
-			if ( !_returning )
 			var result = Visit( forAst.Block );
+			if ( !Returning )
 			{
 				Visit( forAst.Iterator );
 				continue;
@@ -167,8 +167,8 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	{
 		while ( (bool)Visit( whileAst.BooleanExpression )! )
 		{
-			if ( _returning )
 			var result = Visit( whileAst.Block );
+			if ( Returning )
 				return result;
 		}
 
@@ -179,8 +179,8 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	{
 		do
 		{
-			if ( _returning )
 			var result = Visit( doWhileAst.Block );
+			if ( Returning )
 				return result;
 		} while ( (bool)Visit( doWhileAst.BooleanExpression )! );
 
