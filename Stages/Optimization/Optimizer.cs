@@ -52,23 +52,17 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 
 	protected override Ast VisitProgram( ProgramAst programAst )
 	{
-		var newCompound = Visit( programAst.Compound );
-		return newCompound is NoOperationAst
-			? AddChange( new NoOperationAst( programAst.StartLocation ) )
-			: new ProgramAst( (CompoundStatementAst)newCompound );
-	}
-	{
 		var newStatements = ImmutableArray.CreateBuilder<Ast>();
-		foreach ( var statement in compoundStatementAst.Statements )
+		foreach ( var statement in programAst.Statements )
 		{
 			var result = Visit( statement );
 			if ( result is not NoOperationAst )
 				newStatements.Add( result );
 		}
-
+		
 		return newStatements.Count == 0
-			? AddChange( new NoOperationAst( compoundStatementAst.StartLocation ) )
-			: new CompoundStatementAst( compoundStatementAst.StartLocation, newStatements.ToImmutable() );
+			? AddChange( new NoOperationAst( programAst.StartLocation ) )
+			: new ProgramAst( newStatements.ToImmutable() );
 	}
 
 	protected override Ast VisitBlock( BlockAst blockAst )

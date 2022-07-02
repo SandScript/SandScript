@@ -81,20 +81,19 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	private bool VerifyTypeLoose( ITypeProvider type, [NotNullWhen(false)] out ITypeProvider? expectedType ) =>
 		_neededTypes.AssertTypeCheckLoose( type, out expectedType );
 
-	protected override ITypeProvider VisitProgram( ProgramAst programAst ) => Visit( programAst.Compound );
+	protected override ITypeProvider VisitProgram( ProgramAst programAst )
 	{
-		var result = TypeProviders.Builtin.Nothing;
-		foreach ( var statement in compoundStatementAst.Statements )
+		foreach ( var statement in programAst.Statements )
 		{
-			result = Visit( statement );
-			if ( result == TypeProviders.Builtin.Nothing )
+			var value = Visit( statement );
+			if ( value == TypeProviders.Builtin.Nothing )
 				continue;
 
-			if ( !VerifyTypeLoose( result, out var expectedType ) )
-				_diagnostics.TypeMismatch( expectedType, result, statement.StartLocation );
+			LeaveScope();
+			return value;
 		}
 
-		return result;
+		return TypeProviders.Builtin.Nothing;
 	}
 
 	protected override ITypeProvider VisitBlock( BlockAst blockAst )

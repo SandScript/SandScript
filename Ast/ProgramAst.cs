@@ -1,14 +1,15 @@
-﻿using System.Text;
+﻿using System.Collections.Immutable;
+using System.Text;
 
 namespace SandScript.AbstractSyntaxTrees;
 
 public sealed class ProgramAst : Ast
 {
-	public CompoundStatementAst Compound { get; }
+	public ImmutableArray<Ast> Statements { get; }
 
-	public ProgramAst( CompoundStatementAst compound ) : base( new TokenLocation( 0, 0 ) )
+	public ProgramAst( ImmutableArray<Ast> statements ) : base( new TokenLocation( 0, 0 ) )
 	{
-		Compound = compound;
+		Statements = statements;
 	}
 
 	public override string Dump( string indent = "" )
@@ -17,8 +18,20 @@ public sealed class ProgramAst : Ast
 		sb.Append( indent );
 		sb.Append( "Program @ " );
 		sb.Append( StartLocation );
+		sb.Append( " (" );
+		sb.Append( Statements.Length );
+		sb.Append( " statements)" );
 		sb.Append( '\n' );
-		sb.Append( Compound.Dump( indent + "\t" ) );
+		
+		var newIndent = indent + '\t';
+		for ( var i = 0; i < Statements.Length; i++ )
+		{
+			sb.Append( indent );
+			sb.Append( i + 1 );
+			sb.Append( ":\n" );
+			sb.Append( Statements[i].Dump( newIndent ) );
+			sb.Append( '\n' );
+		}
 
 		return sb.ToString();
 	}

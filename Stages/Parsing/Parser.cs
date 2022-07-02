@@ -58,7 +58,7 @@ public sealed class Parser : IStage
 		if ( CurrentToken.Type != TokenType.Eof )
 			_diagnostics.UnexpectedToken( TokenType.Eof, CurrentToken.Type, CurrentToken.Location );
 
-		return new ProgramAst( new CompoundStatementAst( new TokenLocation( 1, 1 ), statements ) );
+		return new ProgramAst( statements );
 	}
 	
 	private Token PeekToken( int offset )
