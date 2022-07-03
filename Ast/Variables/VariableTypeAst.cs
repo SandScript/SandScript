@@ -1,6 +1,4 @@
-using SandScript.Exceptions;
-
-namespace SandScript.AbstractSyntaxTrees;
+﻿namespace SandScript.AbstractSyntaxTrees;
 
 public sealed class VariableTypeAst : Ast
 {
@@ -11,8 +9,6 @@ public sealed class VariableTypeAst : Ast
 	public VariableTypeAst( Token token ) : base( token.Location )
 	{
 		Token = token;
-		TypeProvider = TypeProviders.GetByIdentifier( (string)token.Value ) ??
-		               throw new TypeUnsupportedException( (string)token.Value );
-	}
+		TypeProvider = TypeProviders.GetByIdentifier( (string)token.Value )!;
 	}
 }
