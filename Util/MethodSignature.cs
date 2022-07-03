@@ -80,8 +80,7 @@ public class MethodSignature : IEquatable<MethodSignature>
 	public static MethodSignature From( ScriptMethod method ) => From( method.Name, method );
 
 	public static MethodSignature From( MethodDeclarationAst methodDeclaration ) =>
-		new(methodDeclaration.MethodName,
-			methodDeclaration.Parameters.Select( parameter => parameter.VariableType.TypeProvider ).ToList());
+		new(methodDeclaration.MethodName, methodDeclaration.Parameters.Select( parameter => parameter.VariableType.TypeProvider ).ToList());
 
 	public static MethodSignature From( MethodCallAst methodCall ) =>
 		new(methodCall.MethodName, methodCall.ArgumentTypes);
