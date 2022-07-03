@@ -11,9 +11,11 @@ public class Script
 		{
 			if ( !TryGetStage<Interpreter>( out var interpreter ) )
 				throw new StageMissingException( typeof(Interpreter) );
-			
-			var rawGlobals = interpreter.Variables.Global.Variables;
-			return rawGlobals.ToDictionary( global => global.Key, global => ScriptValue.From( global.Value ) );
+
+			var globals = new Dictionary<string, ScriptValue>();
+			foreach ( var rawGlobal in interpreter.Variables.Root )
+				globals.Add( rawGlobal.Key, ScriptValue.From( rawGlobal.Value ) );
+			return globals;
 		}
 	}
 	

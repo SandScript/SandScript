@@ -4,13 +4,22 @@ namespace SandScript;
 
 public class VariableManager<TKey, TValue> where TKey : notnull
 {
-	public readonly VariableContainer<TKey, TValue> Global;
+	public VariableContainer<TKey, TValue> Root
+	{
+		get
+		{
+			var root = Current;
+			while ( root!.Parent is not null )
+				root = Current.Parent;
+			
+			return root;
+		}
+	}
+
 	public VariableContainer<TKey, TValue> Current;
 
 	public VariableManager()
 	{
-		Global = new VariableContainer<TKey, TValue>( null, "Global", null );
-		Current = Global;
 	}
 
 	public void Enter( string name, IEnumerable<KeyValuePair<TKey, TValue>>? startVariables ) =>
@@ -18,7 +27,7 @@ public class VariableManager<TKey, TValue> where TKey : notnull
 
 	public void Leave()
 	{
-		if ( Current != Global )
+		if ( Current.Parent is not null )
 			Current = Current.Parent!;
 	}
 
@@ -27,7 +36,7 @@ public class VariableManager<TKey, TValue> where TKey : notnull
 		var sb = new StringBuilder();
 		
 		sb.Append( "VariableManager\nGlobals:\n" );
-		sb.Append( Global );
+		sb.Append( Root );
 		sb.Append( "\nCurrent:\n" );
 		sb.Append( Current );
 
