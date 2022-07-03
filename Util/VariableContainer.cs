@@ -6,7 +6,9 @@ namespace SandScript;
 public class VariableContainer<TKey, TValue> : IDictionary<TKey, TValue> where TKey : notnull
 {
 	public VariableContainer<TKey, TValue>? Parent { get; }
-	public string Name { get; }
+	public IReadOnlyDictionary<Guid, VariableContainer<TKey, TValue>> Children => _children;
+	
+	public Guid Guid { get; }
 
 	public TValue this[ TKey key ]
 	{
@@ -19,20 +21,31 @@ public class VariableContainer<TKey, TValue> : IDictionary<TKey, TValue> where T
 	
 	public int Count => _variables.Count;
 	public bool IsReadOnly => false;
-	
-	private readonly Dictionary<TKey, TValue> _variables;
 
-	public VariableContainer( string name, VariableContainer<TKey, TValue>? parent,
+	private readonly Dictionary<Guid, VariableContainer<TKey, TValue>> _children;
+	private readonly Dictionary<TKey, TValue> _variables;
+	private readonly IEqualityComparer<TKey>? _comparer;
+
+	public VariableContainer( Guid guid, VariableContainer<TKey, TValue>? parent,
 		IEnumerable<KeyValuePair<TKey, TValue>>? startVariables, IEqualityComparer<TKey>? comparer )
 	{
 		Parent = parent;
-		Name = name;
+		Guid = guid;
 
+		_comparer = comparer;
+		_children = new Dictionary<Guid, VariableContainer<TKey, TValue>>();
 		_variables = startVariables is not null
 			? new Dictionary<TKey, TValue>( startVariables, comparer )
 			: new Dictionary<TKey, TValue>( comparer );
 	}
-	
+
+	public VariableContainer<TKey, TValue> AddChild( Guid guid, IEnumerable<KeyValuePair<TKey, TValue>>? startVariables )
+	{
+		var container = new VariableContainer<TKey, TValue>( guid, this, startVariables, _comparer );
+		_children.Add( guid, container );
+		return container;
+	}
+
 	public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => _variables.GetEnumerator();
 
 	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
