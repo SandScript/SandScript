@@ -10,9 +10,10 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	Type IStage.PrerequisiteStage => typeof(Parser);
 	Type? IStage.SortBeforeStage => null;
 
-	internal readonly VariableManager<string, ITypeProvider> VariableTypes = new();
-	internal readonly VariableManager<MethodSignature, ScriptMethod> VariableMethods = new();
-	private readonly VariableManager<string, ScriptVariable> _variableExternals = new();
+	internal readonly VariableManager<string, ITypeProvider> VariableTypes = new(null);
+	internal readonly VariableManager<MethodSignature, ScriptMethod> VariableMethods =
+		new(new IgnoreHashCodeComparer<MethodSignature>());
+	private readonly VariableManager<string, ScriptVariable> _variableExternals = new(null);
 
 	private readonly SemanticAnalyzerDiagnostics _diagnostics = new();
 	private readonly TypeCheckStack _neededTypes = new();
@@ -22,14 +23,14 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		foreach ( var method in SandScript.CustomMethods )
 		{
 			var methodSignature = MethodSignature.From( method );
-			VariableTypes.Global.Set( methodSignature.ToString(), TypeProviders.Builtin.Method );
-			VariableMethods.Global.Set( methodSignature, method );
+			VariableTypes.Root.AddOrUpdate( methodSignature.ToString(), TypeProviders.Builtin.Method );
+			VariableMethods.Root.AddOrUpdate( methodSignature, method );
 		}
 
 		foreach ( var variable in SandScript.CustomVariables )
 		{
-			VariableTypes.Global.Set( variable.Name, variable.TypeProvider );
-			_variableExternals.Global.Set( variable.Name, variable );
+			VariableTypes.Root.AddOrUpdate( variable.Name, variable.TypeProvider );
+			_variableExternals.Root.AddOrUpdate( variable.Name, variable );
 		}
 	}
 	
@@ -55,11 +56,11 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		return _diagnostics.Errors.Count == 0;
 	}
 
-	private void EnterScope( string name, IEnumerable<KeyValuePair<string, ITypeProvider>>? startVariables )
+	private void EnterScope( string name, IEnumerable<KeyValuePair<string, ITypeProvider>>? startVariables = null )
 	{
 		VariableTypes.Enter( name, startVariables );
-		VariableMethods.Enter( name, null );
-		_variableExternals.Enter( name, null );
+		VariableMethods.Enter( name );
+		_variableExternals.Enter( name );
 	}
 
 	private void LeaveScope()
@@ -98,7 +99,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 
 	protected override ITypeProvider VisitBlock( BlockAst blockAst )
 	{
-		EnterScope( "Block", null );
+		EnterScope( "Block" );
 		foreach ( var statement in blockAst.Statements )
 		{
 			var value = Visit( statement );
@@ -127,13 +128,13 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	
 	protected override ITypeProvider VisitAssignment( AssignmentAst assignmentAst )
 	{
-		if ( !VariableTypes.Current.TryGet( assignmentAst.Variable.VariableName, out var type, out _ ) )
+		if ( !VariableTypes.Current.TryGetValue( assignmentAst.Variable.VariableName, out var type ) )
 		{
 			_diagnostics.Undefined( assignmentAst.Variable.VariableName );
 			return TypeProviders.Builtin.Nothing;
 		}
 
-		if ( _variableExternals.Current.TryGet( assignmentAst.Variable.VariableName, out var variable, out _ ) && !variable.CanWrite )
+		if ( _variableExternals.Current.TryGetValue( assignmentAst.Variable.VariableName, out var variable ) && !variable.CanWrite )
 		{
 			_diagnostics.Unwritable( assignmentAst.Variable.VariableName );
 			return TypeProviders.Builtin.Nothing;
@@ -204,7 +205,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 
 	protected override ITypeProvider VisitFor( ForAst forAst )
 	{
-		EnterScope( "InternalFor", null );
+		EnterScope( "InternalFor" );
 		VisitExpectingType( TypeProviders.Builtin.Number, forAst.VariableDeclaration );
 		VisitExpectingType( TypeProviders.Builtin.Boolean, forAst.BooleanExpression );
 		var result = Visit( forAst.Block );
@@ -229,16 +230,16 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	{
 		var method = new ScriptMethod( methodDeclarationAst );
 		var methodSignature = MethodSignature.From( method );
-		if ( VariableMethods.Current.TryGet( methodSignature, out _, out var container ) )
+		if ( VariableMethods.Current.TryGetValue( methodSignature, out _, out var container ) )
 		{
 			_diagnostics.Redefined( methodSignature.ToString(), container.Name );
 			return TypeProviders.Builtin.Nothing;
 		}
 		
-		VariableTypes.Current.Set( methodSignature.ToString(), TypeProviders.Builtin.Method );
-		VariableMethods.Current.Set( methodSignature, new ScriptMethod( methodDeclarationAst ) );
+		VariableTypes.Current.AddOrUpdate( methodSignature.ToString(), TypeProviders.Builtin.Method );
+		VariableMethods.Current.AddOrUpdate( methodSignature, new ScriptMethod( methodDeclarationAst ) );
 
-		EnterScope( $"Method - {methodSignature}", null );
+		EnterScope( $"Method - {methodSignature}" );
 		foreach ( var parameter in methodDeclarationAst.Parameters )
 			Visit( parameter );
 		VisitExpectingType( methodDeclarationAst.ReturnType.TypeProvider, methodDeclarationAst.Scope );
@@ -256,7 +257,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		}
 
 		var callSignature = MethodSignature.From( methodCallAst );
-		if ( !VariableMethods.Current.TryGet( callSignature, out var method, out _ ) )
+		if ( !VariableMethods.Current.TryGetValue( callSignature, out var method ) )
 		{
 			_diagnostics.Undefined( callSignature.ToString() );
 			return TypeProviders.Builtin.Nothing;
@@ -280,7 +281,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 			
 			VisitExpectingType( parameter.Item2, methodCallAst.Arguments[i] );
 		}
-
+		
 		return method.ReturnTypeProvider;
 	}
 
@@ -299,13 +300,13 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		{
 			var variableName = variable.VariableName;
 			
-			if ( VariableTypes.Current.TryGet( variableName, out _, out var container ) )
+			if ( VariableTypes.Current.TryGetValue( variableName, out _, out var container ) )
 			{
 				_diagnostics.Redefined( variableName, container.Name );
 				continue;
 			}
 
-			VariableTypes.Current.Set( variableName, value );
+			VariableTypes.Current.AddOrUpdate( variableName, value );
 		}
 
 		return TypeProviders.Builtin.Nothing;
@@ -313,13 +314,13 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 
 	protected override ITypeProvider VisitVariable( VariableAst variableAst )
 	{
-		if ( !VariableTypes.Current.TryGet( variableAst.VariableName, out var variableType, out _ ) )
+		if ( !VariableTypes.Current.TryGetValue( variableAst.VariableName, out var variableType ) )
 		{
 			_diagnostics.Undefined( variableAst.VariableName );
 			return TypeProviders.Builtin.Nothing;
 		}
 
-		if ( _variableExternals.Current.TryGet( variableAst.VariableName, out var variable, out _ ) && !variable.CanRead )
+		if ( _variableExternals.Current.TryGetValue( variableAst.VariableName, out var variable ) && !variable.CanRead )
 		{
 			_diagnostics.Unreadable( variableAst.VariableName );
 			return variable.TypeProvider;

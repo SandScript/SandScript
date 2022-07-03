@@ -18,12 +18,16 @@ public class VariableManager<TKey, TValue> where TKey : notnull
 
 	public VariableContainer<TKey, TValue> Current;
 
-	public VariableManager()
+	private readonly IEqualityComparer<TKey>? _comparer;
+
+	public VariableManager( IEqualityComparer<TKey>? comparer )
 	{
+		_comparer = comparer;
+		Current = new VariableContainer<TKey, TValue>( "Root", null, null, _comparer );
 	}
 
-	public void Enter( string name, IEnumerable<KeyValuePair<TKey, TValue>>? startVariables ) =>
-		Current = new VariableContainer<TKey, TValue>( Current, name, startVariables );
+	public void Enter( string name, IEnumerable<KeyValuePair<TKey, TValue>>? startVariables = null ) =>
+		Current = new VariableContainer<TKey, TValue>( name, Current, startVariables, _comparer );
 
 	public void Leave()
 	{

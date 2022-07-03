@@ -105,23 +105,23 @@ public class Script
 		if ( !TryGetStage<Interpreter>( out var interpreter ) )
 			throw new StageMissingException( typeof(Interpreter) );
 
-		if ( analyzer.VariableTypes.Global.TryGet( varName, out _, out _ ) )
+		if ( analyzer.VariableTypes.Root.ContainsKey( varName ) )
 			throw new GlobalRedefinedException( varName );
 
 		var valueTypeProvider = TypeProviders.GetByType( value.Type );
 		if ( valueTypeProvider is null )
 			throw new TypeUnsupportedException( value.Type );
 		
-		analyzer.VariableTypes.Global.Set( varName, valueTypeProvider );
-		interpreter.Variables.Global.Set( varName, value );
+		analyzer.VariableTypes.Root.Add( varName, valueTypeProvider );;
+		interpreter.Variables.Root.Add( varName, value );
 
 		if ( valueTypeProvider != TypeProviders.Builtin.Method )
 			return;
 
 		var method = (ScriptMethod)value.Value!;
 		var methodSignature = MethodSignature.From( method );
-		analyzer.VariableMethods.Global.Set( methodSignature, method );
-		interpreter.MethodVariables.Global.Set( methodSignature, value );
+		analyzer.VariableMethods.Root.Add( methodSignature, method );
+		interpreter.MethodVariables.Root.Add( methodSignature, value );
 	}
 
 	public ScriptValue Call( ScriptMethod method, params object?[] args )

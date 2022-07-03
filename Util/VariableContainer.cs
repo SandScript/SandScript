@@ -1,95 +1,96 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections;
 using System.Text;
 
 namespace SandScript;
 
-public class VariableContainer<TKey, TValue> where TKey : notnull
+public class VariableContainer<TKey, TValue> : IDictionary<TKey, TValue> where TKey : notnull
 {
 	public VariableContainer<TKey, TValue>? Parent { get; }
 	public string Name { get; }
 
-	public IReadOnlyDictionary<TKey, TValue> Variables => _variables;
+	public TValue this[ TKey key ]
+	{
+		get => _variables[key];
+		set => _variables[key] = value;
+	}
+
+	public ICollection<TKey> Keys => _variables.Keys;
+	public ICollection<TValue> Values => _variables.Values;
+	
+	public int Count => _variables.Count;
+	public bool IsReadOnly => false;
+	
 	private readonly Dictionary<TKey, TValue> _variables;
 
-	public VariableContainer( VariableContainer<TKey, TValue>? parent, string name,
-		IEnumerable<KeyValuePair<TKey, TValue>>? startVariables )
+	public VariableContainer( string name, VariableContainer<TKey, TValue>? parent,
+		IEnumerable<KeyValuePair<TKey, TValue>>? startVariables, IEqualityComparer<TKey>? comparer )
 	{
 		Parent = parent;
 		Name = name;
 
 		_variables = startVariables is not null
-			? new Dictionary<TKey, TValue>( startVariables )
-			: new Dictionary<TKey, TValue>();
+			? new Dictionary<TKey, TValue>( startVariables, comparer )
+			: new Dictionary<TKey, TValue>( comparer );
 	}
 	
-	public void Set( TKey key, TValue value )
-	{
-		if ( ContainsKey( key ) )
-			_variables[key] = value;
-		else
-			_variables.Add( key, value );
-	}
+	public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => _variables.GetEnumerator();
 
-	public TValue? Get( TKey key, out VariableContainer<TKey, TValue>? container )
-	{
-		if ( TryGetValue( key, out var value ) )
-		{
-			container = this;
-			return value;
-		}
+	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+	
+	public void Add( TKey key, TValue value ) => _variables.Add( key, value );
 
-		container = null;
-		return Parent is not null ? Parent.Get( key, out container ) : default;
-	}
+	public void Add( KeyValuePair<TKey, TValue> item ) => Add( item.Key, item.Value );
 
-	public bool TryGet( TKey key, [NotNullWhen(true)] out TValue? value,
-		[NotNullWhen(true)] out VariableContainer<TKey, TValue>? container )
-	{
-		if ( TryGetValue( key, out var val ) )
-		{
-			container = this;
-			value = val;
-			return true;
-		}
+	public bool Remove( TKey key ) => _variables.Remove( key );
+	
+	public bool Remove( KeyValuePair<TKey, TValue> item ) => _variables.Remove( item.Key );
+	
+	public void Clear() => _variables.Clear();
 
-		container = null;
-		if ( Parent is not null )
-			return Parent.TryGet( key, out value, out container );
+	public void CopyTo( KeyValuePair<TKey, TValue>[] array, int arrayIndex ) => throw new NotImplementedException();
 
-		value = default;
-		return false;
-	}
+	public bool Contains( KeyValuePair<TKey, TValue> item ) =>
+		TryGetValue( item.Key, out var value ) && value!.Equals( item.Value );
 
-	private bool TryGetValue( TKey key, [MaybeNullWhen(true)] out TValue value )
-	{
-		if ( _variables.TryGetValue( key, out value ) )
-			return true;
+	public bool ContainsKey( TKey key ) => ContainsKey( key, true, out _ );
 
-		foreach ( var pair in _variables )
-		{
-			if ( !key.Equals( pair.Key ) )
-				continue;
+	public bool ContainsKey( TKey key, bool recursive ) => ContainsKey( key, recursive, out _ );
 
-			value = pair.Value;
-			return true;
-		}
-
-		value = default;
-		return false;
-	}
-
-	private bool ContainsKey( TKey key )
+	public bool ContainsKey( TKey key, bool recursive, out VariableContainer<TKey, TValue> container )
 	{
 		if ( _variables.ContainsKey( key ) )
-			return true;
-
-		foreach ( var pair in _variables )
 		{
-			if ( key.Equals( pair.Key ) )
-				return true;
+			container = this;
+			return true;
 		}
 
+		if ( recursive && Parent is not null )
+			return Parent.ContainsKey( key, recursive, out container );
+
+		container = default;
 		return false;
+	}
+
+	public void AddOrUpdate( TKey key, TValue value )
+	{
+		if ( ContainsKey( key, true, out var container ) )
+			container[key] = value;
+
+		Add( key, value );
+	}
+
+	public bool TryGetValue( TKey key, out TValue value ) => TryGetValue( key, out value, out _ );
+
+	public bool TryGetValue( TKey key, out TValue value, out VariableContainer<TKey, TValue> container )
+	{
+		if ( !ContainsKey( key, true, out container ) )
+		{
+			value = default;
+			return false;
+		}
+
+		value = container[key];
+		return true;
 	}
 
 	public override string ToString()

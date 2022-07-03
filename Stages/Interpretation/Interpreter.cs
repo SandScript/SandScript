@@ -13,8 +13,9 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	
 	internal Script Owner { get; private set; }
 
-	internal readonly VariableManager<string, object?> Variables = new();
-	internal readonly VariableManager<MethodSignature, object?> MethodVariables = new();
+	internal readonly VariableManager<string, object?> Variables = new(null);
+	internal readonly VariableManager<MethodSignature, object?> MethodVariables =
+		new(new IgnoreHashCodeComparer<MethodSignature>());
 	
 	internal readonly InterpreterDiagnostics Diagnostics = new();
 	internal bool Returning;
@@ -27,12 +28,12 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		foreach ( var method in SandScript.CustomMethods )
 		{
 			var methodSignature = MethodSignature.From( method );
-			Variables.Global.Set( methodSignature.ToString(), method );
-			MethodVariables.Global.Set( methodSignature, method );
+			Variables.Root.Add( methodSignature.ToString(), method );
+			MethodVariables.Root.Add( methodSignature, method );
 		}
 
 		foreach ( var variable in SandScript.CustomVariables )
-			Variables.Global.Set( variable.Name, variable );
+			Variables.Root.Add( variable.Name, variable );
 	}
 	
 	StageResult IStage.Run( Script owner, object?[] arguments )
@@ -79,7 +80,7 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 
 	protected override object? VisitBlock( BlockAst blockAst )
 	{
-		Variables.Enter( "Block", null );
+		Variables.Enter( "Block" );
 		foreach ( var statement in blockAst.Statements )
 		{
 			var result = Visit( statement );
@@ -103,7 +104,7 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	protected override object? VisitAssignment( AssignmentAst assignmentAst )
 	{
 		var variableName = assignmentAst.Variable.VariableName;
-		var value = Variables.Current.Get( variableName, out var container );
+		Variables.Current.TryGetValue( variableName, out var value, out var container );
 
 		object? newValue;
 		if ( assignmentAst.Operator.Type == TokenType.Equals )
@@ -118,7 +119,7 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		if ( value is ScriptVariable variable )
 			variable.SetValue( newValue );
 		else
-			container!.Set( variableName, newValue );
+			container[variableName] = newValue;
 
 		return null;
 	}
@@ -144,7 +145,7 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 
 	protected override object? VisitFor( ForAst forAst )
 	{
-		Variables.Enter( "InternalFor", null );
+		Variables.Enter( "InternalFor" );
 		Visit( forAst.VariableDeclaration );
 		while ( (bool)Visit( forAst.BooleanExpression )! )
 		{
@@ -192,15 +193,15 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		var method = new ScriptMethod( methodDeclarationAst );
 		var methodSignature = MethodSignature.From( method );
 		
-		Variables.Current.Set( methodSignature.ToString(), method );
-		MethodVariables.Current.Set( methodSignature, method );
+		Variables.Current.AddOrUpdate( methodSignature.ToString(), method );
+		MethodVariables.Current.AddOrUpdate( methodSignature, method );
 
 		return null;
 	}
 	
 	protected override object? VisitMethodCall( MethodCallAst methodCallAst )
 	{
-		var variable = MethodVariables.Current.Get( MethodSignature.From( methodCallAst ), out _ );
+		MethodVariables.Current.TryGetValue( MethodSignature.From( methodCallAst ), out var variable );
 
 		var arguments = new object?[methodCallAst.Arguments.Length];
 		for ( var i = 0; i < methodCallAst.Arguments.Length; i++ )
@@ -215,15 +216,15 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		                   variableDeclarationAst.VariableType.TypeProvider.CreateDefault();
 
 		foreach ( var variable in variableDeclarationAst.VariableNames )
-			Variables.Current.Set( variable.VariableName, defaultValue );
+			Variables.Current.AddOrUpdate( variable.VariableName, defaultValue );
 
 		return null;
 	}
 
 	protected override object? VisitVariable( VariableAst variableAst )
 	{
-		var value = Variables.Current.Get( variableAst.VariableName, out _ );
-		return value is ScriptVariable variable ? variable.GetValue() : value;
+		Variables.Current.TryGetValue( variableAst.VariableName, out var variable );
+		return variable is ScriptVariable sv ? sv.GetValue() : variable;
 	}
 
 	protected override object VisitVariableType( VariableTypeAst variableTypeAst )

@@ -10,8 +10,9 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 	Type IStage.PrerequisiteStage => typeof(SemanticAnalyzer);
 	Type? IStage.SortBeforeStage => null;
 
-	private readonly VariableManager<string, bool> _removedVariables = new();
-	private readonly VariableManager<MethodSignature, bool> _removedMethods = new();
+	private readonly VariableManager<string, bool> _removedVariables = new(null);
+	private readonly VariableManager<MethodSignature, bool> _removedMethods =
+		new(new IgnoreHashCodeComparer<MethodSignature>());
 	
 	private readonly OptimizerDiagnostics _diagnostics = new();
 
@@ -179,7 +180,7 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 				(BlockAst)newScope );
 		}
 
-		_removedMethods.Current.Set( MethodSignature.From( methodDeclarationAst ), true );
+		_removedMethods.Current.AddOrUpdate( MethodSignature.From( methodDeclarationAst ), true );
 		return AddChange( new NoOperationAst( methodDeclarationAst.StartLocation ) );
 	}
 
@@ -187,7 +188,7 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 	// If method is unused or undefined due to previous optimization. Remove it.
 	protected override Ast VisitMethodCall( MethodCallAst methodCallAst )
 	{
-		if ( _removedMethods.Current.TryGet( MethodSignature.From( methodCallAst ), out _, out _ ) )
+		if ( _removedMethods.Current.ContainsKey( MethodSignature.From( methodCallAst ) ) )
 			return AddChange( new NoOperationAst( methodCallAst.StartLocation ) );
 
 		var newArguments = ImmutableArray.CreateBuilder<Ast>();
