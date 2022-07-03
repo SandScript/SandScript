@@ -1,3 +1,4 @@
+﻿using System.Collections.Immutable;
 
 namespace SandScript.AbstractSyntaxTrees;
 
@@ -5,13 +6,13 @@ public sealed class MethodDeclarationAst : Ast
 {
 	public readonly VariableTypeAst ReturnType;
 	public readonly VariableAst MethodNameVariable;
-	public readonly List<VariableDeclarationAst> Parameters;
+	public readonly ImmutableArray<VariableDeclarationAst> Parameters;
 	public readonly BlockAst Scope;
 
 	public readonly string MethodName;
 
-	public MethodDeclarationAst( VariableTypeAst returnType, VariableAst methodNameVariable, List<VariableDeclarationAst> parameters,
-		BlockAst scope ) : base( returnType.Token.Location )
+	public MethodDeclarationAst( VariableTypeAst returnType, VariableAst methodNameVariable,
+		ImmutableArray<VariableDeclarationAst> parameters, BlockAst scope ) : base( returnType.Token.Location )
 	{
 		ReturnType = returnType;
 		MethodNameVariable = methodNameVariable;

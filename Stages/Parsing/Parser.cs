@@ -225,7 +225,7 @@ public sealed class Parser : IStage
 		var methodName = Variable();
 		
 		EatToken( TokenType.LeftParenthesis );
-		var parameters = new List<VariableDeclarationAst>();
+		var parameters = ImmutableArray.CreateBuilder<VariableDeclarationAst>();
 		if ( CurrentToken.Type != TokenType.RightParenthesis )
 		{
 			parameters.Add( VariableDeclarationStatement( false ) );
@@ -237,7 +237,7 @@ public sealed class Parser : IStage
 		}
 		EatToken( TokenType.RightParenthesis );
 
-		return new MethodDeclarationAst( returnType, methodName, parameters, BlockStatement() );
+		return new MethodDeclarationAst( returnType, methodName, parameters.ToImmutable(), BlockStatement() );
 	}
 	
 	private MethodCallAst MethodCallStatement()
