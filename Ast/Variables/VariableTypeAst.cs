@@ -1,4 +1,3 @@
-﻿using System.Text;
 using SandScript.Exceptions;
 
 namespace SandScript.AbstractSyntaxTrees;
@@ -15,18 +14,5 @@ public sealed class VariableTypeAst : Ast
 		TypeProvider = TypeProviders.GetByIdentifier( (string)token.Value ) ??
 		               throw new TypeUnsupportedException( (string)token.Value );
 	}
-
-	public override string Dump( string indent = "" )
-	{
-		var sb = new StringBuilder();
-		sb.Append( indent );
-		sb.Append( "Variable Type @ " );
-		sb.Append( StartLocation );
-		sb.Append( '\n' );
-		
-		sb.Append( indent + '\t' );
-		sb.Append( TypeProvider );
-
-		return sb.ToString();
 	}
 }

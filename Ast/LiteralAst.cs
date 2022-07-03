@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace SandScript.AbstractSyntaxTrees;
+﻿namespace SandScript.AbstractSyntaxTrees;
 
 public class LiteralAst : Ast
 {
@@ -13,19 +11,5 @@ public class LiteralAst : Ast
 	{
 		Token = token;
 		TypeProvider = typeProvider;
-	}
-
-	public override string Dump( string indent = "" )
-	{
-		var sb = new StringBuilder();
-		sb.Append( indent );
-		sb.Append( "Literal @ " );
-		sb.Append( StartLocation );
-		sb.Append( '\n' );
-
-		sb.Append( indent + '\t' );
-		sb.Append( Value );
-
-		return sb.ToString();
 	}
 }

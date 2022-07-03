@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace SandScript.AbstractSyntaxTrees;
+﻿namespace SandScript.AbstractSyntaxTrees;
 
 public sealed class AssignmentAst : Ast
 {
@@ -13,26 +11,5 @@ public sealed class AssignmentAst : Ast
 		Variable = variable;
 		Operator = op;
 		Expression = expression;
-	}
-
-	public override string Dump( string indent = "" )
-	{
-		var sb = new StringBuilder();
-		sb.Append( indent );
-		sb.Append( "Assignment @ " );
-		sb.Append( StartLocation );
-		sb.Append( '\n' );
-		
-		var newIndent = indent + '\t';
-		sb.Append( Variable.Dump( newIndent ) );
-		sb.Append( '\n' );
-		
-		sb.Append( newIndent );
-		sb.Append( Operator.Value );
-		sb.Append( '\n' );
-
-		sb.Append( Expression.Dump( newIndent ) );
-
-		return sb.ToString();
 	}
 }

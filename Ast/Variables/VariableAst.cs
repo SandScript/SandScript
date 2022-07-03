@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace SandScript.AbstractSyntaxTrees;
+﻿namespace SandScript.AbstractSyntaxTrees;
 
 public sealed class VariableAst : Ast
 {
@@ -13,20 +11,5 @@ public sealed class VariableAst : Ast
 		Token = token;
 		
 		VariableName = (string)Token.Value;
-	}
-
-	public override string Dump( string indent = "" )
-	{
-		var sb = new StringBuilder();
-		sb.Append( indent );
-		sb.Append( "Variable @ " );
-		sb.Append( StartLocation );
-		sb.Append( '\n' );
-
-		var newIndent = indent + '\t';
-		sb.Append( newIndent );
-		sb.Append( VariableName );
-
-		return sb.ToString();
 	}
 }

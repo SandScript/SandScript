@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace SandScript.AbstractSyntaxTrees;
+﻿namespace SandScript.AbstractSyntaxTrees;
 
 public class CommentAst : Ast
 {
@@ -11,15 +9,5 @@ public class CommentAst : Ast
 	{
 		Contents = contents;
 		MultiLine = multiline;
-	}
-
-	public override string Dump( string indent = "" )
-	{
-		var sb = new StringBuilder();
-		sb.Append( indent );
-		sb.Append( "Comment @ " );
-		sb.Append( StartLocation );
-
-		return sb.ToString();
 	}
 }

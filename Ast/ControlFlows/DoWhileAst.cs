@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace SandScript.AbstractSyntaxTrees;
+﻿namespace SandScript.AbstractSyntaxTrees;
 
 public sealed class DoWhileAst : Ast
 {
@@ -11,22 +9,5 @@ public sealed class DoWhileAst : Ast
 	{
 		BooleanExpression = booleanExpression;
 		Block = block;
-	}
-
-	public override string Dump( string indent = "" )
-	{
-		var sb = new StringBuilder();
-		sb.Append( indent );
-		sb.Append( "Do While @ " );
-		sb.Append( StartLocation );
-		sb.Append( '\n' );
-
-		var newIndent = indent + '\t';
-		sb.Append( BooleanExpression.Dump( newIndent ) );
-		sb.Append( '\n' );
-
-		sb.Append( Block.Dump( newIndent ) );
-		
-		return sb.ToString();
 	}
 }

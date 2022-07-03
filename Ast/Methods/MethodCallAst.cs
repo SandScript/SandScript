@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using System.Text;
 
 namespace SandScript.AbstractSyntaxTrees;
 
@@ -28,30 +27,5 @@ public sealed class MethodCallAst : Ast
 		ArgumentTypes = argumentTypes;
 
 		MethodName = (string)nameToken.Value;
-	}
-
-	public override string Dump( string indent = "" )
-	{
-		var sb = new StringBuilder();
-		sb.Append( indent );
-		sb.Append( "Method Call @ " );
-		sb.Append( StartLocation );
-		sb.Append( " (" );
-		sb.Append( Arguments.Length );
-		sb.Append( " arguments)" );
-		sb.Append( '\n' );
-
-		var newIndent = indent + '\t';
-		sb.Append( newIndent );
-		sb.Append( MethodName );
-		sb.Append( '\n' );
-
-		foreach ( var argument in Arguments )
-		{
-			sb.Append( argument.Dump( newIndent ) );
-			sb.Append( '\n' );
-		}
-
-		return sb.ToString();
 	}
 }

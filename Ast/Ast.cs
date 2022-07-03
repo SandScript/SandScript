@@ -8,6 +8,4 @@ public abstract class Ast
 	{
 		StartLocation = startLocation;
 	}
-
-	public abstract string Dump( string indent = "" );
 }

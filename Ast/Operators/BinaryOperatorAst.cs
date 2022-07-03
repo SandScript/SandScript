@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace SandScript.AbstractSyntaxTrees;
+﻿namespace SandScript.AbstractSyntaxTrees;
 
 public sealed class BinaryOperatorAst : Ast
 {
@@ -13,23 +11,5 @@ public sealed class BinaryOperatorAst : Ast
 		Left = left;
 		Operator = op;
 		Right = right;
-	}
-
-	public override string Dump( string indent = "" )
-	{
-		var sb = new StringBuilder();
-		sb.Append( indent );
-		sb.Append( "Binary Operator @ " );
-		sb.Append( StartLocation );
-		sb.Append( " (" );
-		sb.Append( Operator.Value );
-		sb.Append( ")\n" );
-
-		var newIndent = indent + '\t';
-		sb.Append( Left.Dump( newIndent ) );
-		sb.Append( '\n' );
-		sb.Append( Right.Dump( newIndent ) );
-
-		return sb.ToString();
 	}
 }

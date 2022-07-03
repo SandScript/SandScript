@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace SandScript.AbstractSyntaxTrees;
+﻿namespace SandScript.AbstractSyntaxTrees;
 
 public sealed class IfAst : Ast
 {
@@ -13,25 +11,5 @@ public sealed class IfAst : Ast
 		BooleanExpression = booleanExpression;
 		TrueBranch = trueBranch;
 		FalseBranch = falseBranch;
-	}
-
-	public override string Dump( string indent = "" )
-	{
-		var sb = new StringBuilder();
-		sb.Append( indent );
-		sb.Append( "If @ " );
-		sb.Append( StartLocation );
-		sb.Append( '\n' );
-
-		var newIndent = indent + '\t';
-		sb.Append( BooleanExpression.Dump( newIndent ) );
-		sb.Append( '\n' );
-
-		sb.Append( TrueBranch.Dump( newIndent ) );
-		sb.Append( '\n' );
-
-		sb.Append( FalseBranch.Dump( newIndent ) );
-		
-		return sb.ToString();
 	}
 }
