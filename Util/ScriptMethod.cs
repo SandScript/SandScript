@@ -4,7 +4,7 @@ using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript;
 
-public class ScriptMethod
+public class ScriptMethod : IEquatable<ScriptMethod>
 {
 	public readonly string Name;
 	public readonly ITypeProvider ReturnTypeProvider;
@@ -90,5 +90,32 @@ public class ScriptMethod
 			interpreter.Returning = false;
 			return result;
 		}
+	}
+
+	public bool Equals( ScriptMethod? other )
+	{
+		if ( ReferenceEquals( null, other ) )
+			return false;
+
+		if ( ReferenceEquals( this, other ) )
+			return true;
+
+		return ReturnTypeProvider == other.ReturnTypeProvider && Signature.Equals( other.Signature );
+	}
+
+	public override bool Equals( object? obj )
+	{
+		if ( ReferenceEquals( null, obj ) )
+			return false;
+
+		if ( ReferenceEquals( this, obj ) )
+			return true;
+
+		return obj.GetType() == GetType() && Equals( (ScriptMethod)obj );
+	}
+
+	public override int GetHashCode()
+	{
+		return Signature.GetHashCode();
 	}
 }
