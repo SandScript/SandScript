@@ -56,11 +56,11 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		return _diagnostics.Errors.Count == 0;
 	}
 
-	private void EnterScope( string name, IEnumerable<KeyValuePair<string, ITypeProvider>>? startVariables = null )
+	private void EnterScope( Guid guid, IEnumerable<KeyValuePair<string, ITypeProvider>>? startVariables = null )
 	{
-		VariableTypes.Enter( name, startVariables );
-		VariableMethods.Enter( name );
-		_variableExternals.Enter( name );
+		VariableTypes.Enter( guid, startVariables );
+		VariableMethods.Enter( guid );
+		_variableExternals.Enter( guid );
 	}
 
 	private void LeaveScope()
@@ -99,7 +99,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 
 	protected override ITypeProvider VisitBlock( BlockAst blockAst )
 	{
-		EnterScope( "Block" );
+		EnterScope( blockAst.Guid );
 		foreach ( var statement in blockAst.Statements )
 		{
 			var value = Visit( statement );
@@ -205,7 +205,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 
 	protected override ITypeProvider VisitFor( ForAst forAst )
 	{
-		EnterScope( "InternalFor" );
+		EnterScope( forAst.Guid );
 		VisitExpectingType( TypeProviders.Builtin.Number, forAst.VariableDeclaration );
 		VisitExpectingType( TypeProviders.Builtin.Boolean, forAst.BooleanExpression );
 		var result = Visit( forAst.Block );
@@ -232,14 +232,14 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		var methodSignature = MethodSignature.From( method );
 		if ( VariableMethods.Current.TryGetValue( methodSignature, out _, out var container ) )
 		{
-			_diagnostics.Redefined( methodSignature.ToString(), container.Name );
+			_diagnostics.Redefined( methodSignature.ToString(), container.Guid );
 			return TypeProviders.Builtin.Nothing;
 		}
 		
 		VariableTypes.Current.AddOrUpdate( methodSignature.ToString(), TypeProviders.Builtin.Method );
 		VariableMethods.Current.AddOrUpdate( methodSignature, new ScriptMethod( methodDeclarationAst ) );
 
-		EnterScope( $"Method - {methodSignature}" );
+		EnterScope( methodDeclarationAst.Guid );
 		foreach ( var parameter in methodDeclarationAst.Parameters )
 			Visit( parameter );
 		VisitExpectingType( methodDeclarationAst.ReturnType.TypeProvider, methodDeclarationAst.Scope );
@@ -302,7 +302,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 			
 			if ( VariableTypes.Current.TryGetValue( variableName, out _, out var container ) )
 			{
-				_diagnostics.Redefined( variableName, container.Name );
+				_diagnostics.Redefined( variableName, container.Guid );
 				continue;
 			}
 

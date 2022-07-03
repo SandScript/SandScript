@@ -10,8 +10,8 @@ public sealed class SemanticAnalyzerDiagnostics : StageDiagnostics
 	public void Undefined( string name ) =>
 		Error( $"{name} is not defined" );
 
-	public void Redefined( string name, string containerName ) =>
-		Error( $"{name} is already defined in {containerName}" );
+	public void Redefined( string name, Guid containerGuid ) =>
+		Error( $"{name} is already defined in {containerGuid}" );
 
 	public void Unreadable( string name ) =>
 		Error( $"{name} is not readable" );

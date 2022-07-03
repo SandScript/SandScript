@@ -80,7 +80,7 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 
 	protected override object? VisitBlock( BlockAst blockAst )
 	{
-		Variables.Enter( "Block" );
+		Variables.Enter( blockAst.Guid );
 		foreach ( var statement in blockAst.Statements )
 		{
 			var result = Visit( statement );
@@ -145,7 +145,7 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 
 	protected override object? VisitFor( ForAst forAst )
 	{
-		Variables.Enter( "InternalFor" );
+		Variables.Enter( forAst.Guid );
 		Visit( forAst.VariableDeclaration );
 		while ( (bool)Visit( forAst.BooleanExpression )! )
 		{
