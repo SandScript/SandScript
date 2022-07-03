@@ -74,10 +74,6 @@ public class MethodSignature : IEquatable<MethodSignature>
 
 	public override int GetHashCode() => HashCode.Combine( _name, _types );
 
-	public static bool operator ==( MethodSignature left, MethodSignature right ) => left.Equals( right );
-
-	public static bool operator !=( MethodSignature left, MethodSignature right ) => !(left == right);
-
 	public static MethodSignature From( string methodName, ScriptMethod method ) =>
 		new(methodName, method.Parameters.Select( parameter => parameter.Item2 ).ToList());
 

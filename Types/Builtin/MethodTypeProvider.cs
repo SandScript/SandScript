@@ -13,7 +13,7 @@ public sealed class MethodTypeProvider : ITypeProvider
 	public Dictionary<TokenType, Func<object?, object?>> UnaryOperations { get; } = new();
 
 	public bool Compare( object? left, object? right ) =>
-		((ScriptMethod)left!).Signature == ((ScriptMethod)right!).Signature;
+		((ScriptMethod)left!).Signature.Equals( ((ScriptMethod)right!).Signature );
 
 	public object? CreateDefault() => null;
 }
