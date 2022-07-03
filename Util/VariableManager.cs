@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace SandScript;
+﻿namespace SandScript;
 
 public class VariableManager<TKey, TValue> where TKey : notnull
 {
@@ -33,17 +31,5 @@ public class VariableManager<TKey, TValue> where TKey : notnull
 	{
 		if ( Current.Parent is not null )
 			Current = Current.Parent!;
-	}
-
-	public override string ToString()
-	{
-		var sb = new StringBuilder();
-		
-		sb.Append( "VariableManager\nGlobals:\n" );
-		sb.Append( Root );
-		sb.Append( "\nCurrent:\n" );
-		sb.Append( Current );
-
-		return sb.ToString();
 	}
 }

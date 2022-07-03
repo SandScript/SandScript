@@ -92,15 +92,4 @@ public class VariableContainer<TKey, TValue> : IDictionary<TKey, TValue> where T
 		value = container[key];
 		return true;
 	}
-
-	public override string ToString()
-	{
-		var sb = new StringBuilder();
-		
-		sb.Append( "VariableContainer \"" + Name + "\"" );
-		foreach ( var (key, value) in _variables )
-			sb.Append( "\n" + key + ": " + value );
-
-		return sb.ToString();
-	}
 }
