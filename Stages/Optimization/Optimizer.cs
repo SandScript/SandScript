@@ -47,8 +47,6 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 
 	private Ast AddChange( Ast ast )
 	{
-		//Console.WriteLine(Environment.StackTrace);
-		//Console.WriteLine("----------");
 		_numChanges++;
 		return ast;
 	}
