@@ -11,7 +11,7 @@ public class VariableManager<TKey, TValue> where TKey : notnull
 		{
 			var root = Current;
 			while ( root!.Parent is not null )
-				root = Current.Parent;
+				root = root.Parent;
 			
 			return root;
 		}
