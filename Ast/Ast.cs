@@ -1,4 +1,6 @@
-﻿namespace SandScript.AbstractSyntaxTrees;
+﻿using System;
+
+namespace SandScript.AbstractSyntaxTrees;
 
 public abstract class Ast
 {

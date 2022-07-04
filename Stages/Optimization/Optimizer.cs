@@ -1,5 +1,7 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Linq;
 using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript;

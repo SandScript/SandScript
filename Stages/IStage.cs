@@ -1,4 +1,6 @@
-﻿namespace SandScript;
+﻿using System;
+
+namespace SandScript;
 
 public interface IStage
 {

@@ -1,4 +1,6 @@
-﻿namespace SandScript;
+﻿using System.Collections.Generic;
+
+namespace SandScript;
 
 public class ScriptDiagnostics
 {

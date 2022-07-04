@@ -1,4 +1,6 @@
-﻿namespace SandScript.Exceptions;
+﻿using System;
+
+namespace SandScript.Exceptions;
 
 public sealed class TypeUnsupportedException : Exception
 {

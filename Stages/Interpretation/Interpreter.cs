@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using JetBrains.Annotations;
 using SandScript.AbstractSyntaxTrees;
 using SandScript.Exceptions;

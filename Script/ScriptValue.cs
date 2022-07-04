@@ -1,4 +1,5 @@
-﻿using SandScript.Exceptions;
+﻿using System;
+using SandScript.Exceptions;
 
 namespace SandScript;
 

@@ -1,4 +1,7 @@
-﻿using SandScript.AbstractSyntaxTrees;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript;
 

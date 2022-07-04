@@ -1,4 +1,7 @@
-﻿namespace SandScript;
+﻿using System;
+using System.Collections.Generic;
+
+namespace SandScript;
 
 public class VariableManager<TKey, TValue> where TKey : notnull
 {

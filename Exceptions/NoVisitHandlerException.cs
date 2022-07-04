@@ -1,4 +1,5 @@
-﻿using SandScript.AbstractSyntaxTrees;
+﻿using System;
+using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript.Exceptions;
 
