@@ -10,7 +10,7 @@ public class VariableManager<TKey, TValue> where TKey : notnull
 		get
 		{
 			var root = Current;
-			while ( root!.Parent is not null )
+			while ( root.Parent is not null )
 				root = root.Parent;
 			
 			return root;

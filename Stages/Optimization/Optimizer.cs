@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
 using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript;
@@ -12,7 +11,6 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 	Type IStage.PrerequisiteStage => typeof(SemanticAnalyzer);
 	Type? IStage.SortBeforeStage => null;
 
-	private readonly VariableManager<string, bool> _removedVariables = new(null);
 	private readonly VariableManager<MethodSignature, bool> _removedMethods =
 		new(new IgnoreHashCodeComparer<MethodSignature>());
 	

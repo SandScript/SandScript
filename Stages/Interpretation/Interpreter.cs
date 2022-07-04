@@ -211,7 +211,7 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		return ((ScriptMethod)variable!).Invoke( this, arguments );
 	}
 
-	protected override object? VisitParameter( ParameterAst parameterAst )
+	protected override object VisitParameter( ParameterAst parameterAst )
 	{
 		throw new NotImplementedException();
 	}

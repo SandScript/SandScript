@@ -36,5 +36,5 @@ public sealed class SemanticAnalyzerDiagnostics : StageDiagnostics
 		Error( $"The parameter \"{parameterName}\" of the \"{methodName}\" method was not provided", location );
 
 	public void MissingType( TokenLocation location ) =>
-		Error( $"Expected type in initial value", location );
+		Error( "Expected type in initial value", location );
 }
