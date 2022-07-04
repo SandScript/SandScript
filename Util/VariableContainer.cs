@@ -64,14 +64,19 @@ public class VariableContainer<TKey, TValue> : IDictionary<TKey, TValue> where T
 
 	public void CopyTo( KeyValuePair<TKey, TValue>[] array, int arrayIndex ) => throw new NotImplementedException();
 
-	public bool Contains( KeyValuePair<TKey, TValue> item ) =>
-		TryGetValue( item.Key, out var value ) && value!.Equals( item.Value );
+	public bool Contains( KeyValuePair<TKey, TValue> item )
+	{
+		if ( TryGetValue( item.Key, out var value ) && value is not null )
+			return value.Equals( item.Value );
+
+		return false;
+	}
 
 	public bool ContainsKey( TKey key ) => ContainsKey( key, true, out _ );
 
 	public bool ContainsKey( TKey key, bool recursive ) => ContainsKey( key, recursive, out _ );
 
-	public bool ContainsKey( TKey key, bool recursive, out VariableContainer<TKey, TValue> container )
+	public bool ContainsKey( TKey key, bool recursive, [NotNullWhen( true )] out VariableContainer<TKey, TValue>? container )
 	{
 		if ( _variables.ContainsKey( key ) )
 		{
