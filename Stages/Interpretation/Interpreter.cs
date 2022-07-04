@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using JetBrains.Annotations;
 using SandScript.AbstractSyntaxTrees;
 using SandScript.Exceptions;
 
@@ -21,7 +20,6 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	internal readonly InterpreterDiagnostics Diagnostics = new();
 	internal bool Returning;
 
-	[UsedImplicitly]
 	private Interpreter()
 	{
 		Owner = null!;

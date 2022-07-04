@@ -2,7 +2,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using JetBrains.Annotations;
 
 namespace SandScript;
 
@@ -24,7 +23,6 @@ public sealed class Lexer : IStage
 	internal int Row = 1;
 	internal int Column = 1;
 
-	[UsedImplicitly]
 	private Lexer()
     {
     }

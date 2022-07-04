@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using JetBrains.Annotations;
 using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript;
@@ -19,7 +18,6 @@ public sealed class Parser : IStage
 
 	private Token CurrentToken => PeekToken( 0 );
 
-	[UsedImplicitly]
 	private Parser()
 	{
 	}

@@ -1,10 +1,8 @@
 ﻿using System;
-using JetBrains.Annotations;
 
 namespace SandScript;
 
 [AttributeUsage( AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true )]
-[MeansImplicitUse]
 public class ScriptVariableAttribute : Attribute
 {
 	public readonly string VariableName;

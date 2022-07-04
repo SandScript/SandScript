@@ -1,10 +1,8 @@
 ﻿using System;
-using JetBrains.Annotations;
 
 namespace SandScript;
 
 [AttributeUsage( AttributeTargets.Method, AllowMultiple = true )]
-[MeansImplicitUse]
 public class ScriptMethodAttribute : Attribute
 {
 	public readonly string MethodName;
