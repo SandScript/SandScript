@@ -211,6 +211,11 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		return ((ScriptMethod)variable!).Invoke( this, arguments );
 	}
 
+	protected override object? VisitParameter( ParameterAst parameterAst )
+	{
+		throw new NotImplementedException();
+	}
+
 	protected override object? VisitVariableDeclaration( VariableDeclarationAst variableDeclarationAst )
 	{
 		var defaultValue = Visit( variableDeclarationAst.DefaultExpression ) ??

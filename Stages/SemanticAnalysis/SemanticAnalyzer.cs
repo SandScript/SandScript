@@ -210,6 +210,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		EnterScope( forAst.Guid );
 		VisitExpectingType( TypeProviders.Builtin.Number, forAst.VariableDeclaration );
 		VisitExpectingType( TypeProviders.Builtin.Boolean, forAst.BooleanExpression );
+		VisitExpectingType( TypeProviders.Builtin.Nothing, forAst.Iterator );
 		var result = Visit( forAst.Block );
 		LeaveScope();
 
@@ -285,6 +286,12 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		}
 		
 		return method.ReturnTypeProvider;
+	}
+
+	protected override ITypeProvider VisitParameter( ParameterAst parameterAst )
+	{
+		VariableTypes.Current.AddOrUpdate( parameterAst.ParameterName.VariableName, parameterAst.ParameterType.TypeProvider );
+		return parameterAst.ParameterType.TypeProvider;
 	}
 
 	protected override ITypeProvider VisitVariableDeclaration( VariableDeclarationAst variableDeclarationAst )

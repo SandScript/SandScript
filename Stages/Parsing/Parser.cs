@@ -226,19 +226,27 @@ public sealed class Parser : IStage
 		var methodName = Variable();
 		
 		EatToken( TokenType.LeftParenthesis );
-		var parameters = ImmutableArray.CreateBuilder<VariableDeclarationAst>();
+		var parameters = ImmutableArray.CreateBuilder<ParameterAst>();
 		if ( CurrentToken.Type != TokenType.RightParenthesis )
 		{
-			parameters.Add( VariableDeclarationStatement( false ) );
+			parameters.Add( Parameter() );
 			while ( CurrentToken.Type == TokenType.Comma )
 			{
 				EatToken( TokenType.Comma );
-				parameters.Add( VariableDeclarationStatement( false ) );
+				parameters.Add( Parameter() );
 			}
 		}
 		EatToken( TokenType.RightParenthesis );
 
 		return new MethodDeclarationAst( returnType, methodName, parameters.ToImmutable(), BlockStatement() );
+	}
+
+	private ParameterAst Parameter()
+	{
+		var parameterType = VariableType();
+		var parameterName = Variable();
+
+		return new ParameterAst( parameterType, parameterName );
 	}
 	
 	private MethodCallAst MethodCallStatement()

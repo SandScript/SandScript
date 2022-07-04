@@ -174,6 +174,9 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 	// If method is unused and not global. Remove it.
 	protected override Ast VisitMethodDeclaration( MethodDeclarationAst methodDeclarationAst )
 	{
+		foreach ( var parameter in methodDeclarationAst.Parameters )
+			Visit( parameter );
+		
 		var newScope = Visit( methodDeclarationAst.Scope );
 		if ( newScope is not NoOperationAst )
 		{
@@ -198,6 +201,11 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 			newArguments.Add( Visit( argument ) );
 
 		return new MethodCallAst( methodCallAst.NameToken, newArguments.ToImmutable(), methodCallAst.ArgumentTypes );
+	}
+
+	protected override Ast VisitParameter( ParameterAst parameterAst )
+	{
+		return parameterAst;
 	}
 
 	// If variable is only set and never gotten while not being a global. Remove it.

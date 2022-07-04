@@ -53,7 +53,7 @@ public class ScriptMethod : IEquatable<ScriptMethod>
 
 		var parameters = new List<(string, ITypeProvider)>();
 		foreach ( var parameter in methodDeclarationAst.Parameters )
-			parameters.Add( (parameter.VariableNames.First().VariableName, parameter.VariableType.TypeProvider) );
+			parameters.Add( (parameter.ParameterName.VariableName, parameter.ParameterType.TypeProvider) );
 		Parameters = parameters;
 		
 		Signature = MethodSignature.From( this );

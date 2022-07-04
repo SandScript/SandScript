@@ -25,6 +25,7 @@ public abstract class NodeVisitor<T>
 			
 			MethodDeclarationAst pd => VisitMethodDeclaration( pd ),
 			MethodCallAst pc => VisitMethodCall( pc ),
+			ParameterAst p => VisitParameter( p ),
 			
 			VariableDeclarationAst vd => VisitVariableDeclaration( vd ),
 			VariableAst v => VisitVariable( v ),
@@ -61,6 +62,7 @@ public abstract class NodeVisitor<T>
 
 	protected abstract T VisitMethodDeclaration( MethodDeclarationAst methodDeclarationAst );
 	protected abstract T VisitMethodCall( MethodCallAst methodCallAst );
+	protected abstract T VisitParameter( ParameterAst parameterAst );
 
 	protected abstract T VisitVariableDeclaration( VariableDeclarationAst variableDeclarationAst );
 	protected abstract T VisitVariable( VariableAst variableAst );
