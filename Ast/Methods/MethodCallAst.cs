@@ -5,27 +5,21 @@ namespace SandScript.AbstractSyntaxTrees;
 public sealed class MethodCallAst : Ast
 {
 	public readonly Token NameToken;
-	public readonly ImmutableArray<Ast> Arguments;
+	public readonly ImmutableArray<Ast> ArgumentAsts;
 	internal ImmutableArray<ITypeProvider> ArgumentTypes;
 
-	public readonly string MethodName;
+	public string MethodName => (string)NameToken.Value;
 
-	public MethodCallAst( Token nameToken, ImmutableArray<Ast> arguments ) : base( nameToken.Location )
+	public MethodCallAst( Token nameToken, ImmutableArray<Ast> argumentAsts )
+		: this( nameToken, argumentAsts, ImmutableArray<ITypeProvider>.Empty )
 	{
-		NameToken = nameToken;
-		Arguments = arguments;
-		ArgumentTypes = ImmutableArray<ITypeProvider>.Empty;
-
-		MethodName = (string)nameToken.Value;
 	}
 
-	internal MethodCallAst( Token nameToken, ImmutableArray<Ast> arguments, ImmutableArray<ITypeProvider> argumentTypes )
+	internal MethodCallAst( Token nameToken, ImmutableArray<Ast> argumentAsts, ImmutableArray<ITypeProvider> argumentTypes )
 		: base( nameToken.Location )
 	{
 		NameToken = nameToken;
-		Arguments = arguments;
+		ArgumentAsts = argumentAsts;
 		ArgumentTypes = argumentTypes;
-
-		MethodName = (string)nameToken.Value;
 	}
 }

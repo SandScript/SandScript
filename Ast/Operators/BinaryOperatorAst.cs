@@ -2,14 +2,16 @@
 
 public sealed class BinaryOperatorAst : Ast
 {
-	public readonly Ast Left;
+	public readonly Ast LeftAst;
 	public readonly Token Operator;
-	public readonly Ast Right;
+	public readonly Ast RightAst;
 
-	public BinaryOperatorAst( Ast left, Token op, Ast right ) : base( left.StartLocation )
+	public TokenType OperatorType => Operator.Type;
+
+	public BinaryOperatorAst( Ast leftAst, Token op, Ast rightAst ) : base( leftAst.StartLocation )
 	{
-		Left = left;
+		LeftAst = leftAst;
 		Operator = op;
-		Right = right;
+		RightAst = rightAst;
 	}
 }

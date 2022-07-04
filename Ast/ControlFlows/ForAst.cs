@@ -2,17 +2,17 @@
 
 public sealed class ForAst : Ast
 {
-	public readonly VariableDeclarationAst VariableDeclaration;
-	public readonly Ast BooleanExpression;
-	public readonly AssignmentAst Iterator;
-	public readonly BlockAst Block;
+	public readonly VariableDeclarationAst VariableDeclarationAst;
+	public readonly Ast BooleanExpressionAst;
+	public readonly AssignmentAst IteratorAst;
+	public readonly BlockAst BodyAst;
 
-	public ForAst( TokenLocation location, VariableDeclarationAst variableDeclaration, Ast booleanExpression,
-		AssignmentAst iterator, BlockAst block ) : base( location )
+	public ForAst( TokenLocation location, VariableDeclarationAst variableDeclarationAst, Ast booleanExpressionAst,
+		AssignmentAst iteratorAst, BlockAst bodyAst ) : base( location )
 	{
-		VariableDeclaration = variableDeclaration;
-		BooleanExpression = booleanExpression;
-		Iterator = iterator;
-		Block = block;
+		VariableDeclarationAst = variableDeclarationAst;
+		BooleanExpressionAst = booleanExpressionAst;
+		IteratorAst = iteratorAst;
+		BodyAst = bodyAst;
 	}
 }

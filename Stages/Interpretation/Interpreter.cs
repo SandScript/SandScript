@@ -97,22 +97,22 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	protected override object? VisitReturn( ReturnAst returnAst )
 	{
 		Returning = true;
-		return Visit( returnAst.Expression );
+		return Visit( returnAst.ExpressionAst );
 	}
 	
 	protected override object? VisitAssignment( AssignmentAst assignmentAst )
 	{
-		var variableName = assignmentAst.Variable.VariableName;
+		var variableName = assignmentAst.VariableAst.VariableName;
 		Variables.Current.TryGetValue( variableName, out var value, out var container );
 
 		object? newValue;
 		if ( assignmentAst.Operator.Type == TokenType.Equals )
-			newValue = Visit( assignmentAst.Expression );
+			newValue = Visit( assignmentAst.ExpressionAst );
 		else
 		{
 			var binaryOperator = assignmentAst.Operator.Type.GetBinaryOperatorOfAssignment();
 			var operation = value.GetTypeProvider()!.BinaryOperations[binaryOperator];
-			newValue = operation( value, Visit( assignmentAst.Expression ) );
+			newValue = operation( value, Visit( assignmentAst.ExpressionAst ) );
 		}
 
 		if ( value is ScriptVariable variable )
@@ -125,33 +125,33 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 
 	protected override object? VisitBinaryOperator( BinaryOperatorAst binaryOperatorAst )
 	{
-		var left = Visit( binaryOperatorAst.Left );
+		var left = Visit( binaryOperatorAst.LeftAst );
 		var operation = left.GetTypeProvider()!.BinaryOperations[binaryOperatorAst.Operator.Type];
 
-		return operation( left, Visit( binaryOperatorAst.Right ) );
+		return operation( left, Visit( binaryOperatorAst.RightAst ) );
 	}
 
 	protected override object? VisitUnaryOperator( UnaryOperatorAst unaryOperatorAst )
 	{
-		var operand = Visit( unaryOperatorAst.Operand );
+		var operand = Visit( unaryOperatorAst.OperandAst );
 		var operation = operand.GetTypeProvider()!.UnaryOperations[unaryOperatorAst.Operator.Type];
 
 		return operation( operand );
 	}
 
 	protected override object? VisitIf( IfAst ifAst ) =>
-		Visit( (bool)Visit( ifAst.BooleanExpression )! ? ifAst.TrueBranch : ifAst.FalseBranch );
+		Visit( (bool)Visit( ifAst.BooleanExpressionAst )! ? ifAst.TrueBodyAst : ifAst.FalseBodyAst );
 
 	protected override object? VisitFor( ForAst forAst )
 	{
 		Variables.Enter( forAst.Guid );
-		Visit( forAst.VariableDeclaration );
-		while ( (bool)Visit( forAst.BooleanExpression )! )
+		Visit( forAst.VariableDeclarationAst );
+		while ( (bool)Visit( forAst.BooleanExpressionAst )! )
 		{
-			var result = Visit( forAst.Block );
+			var result = Visit( forAst.BodyAst );
 			if ( !Returning )
 			{
-				Visit( forAst.Iterator );
+				Visit( forAst.IteratorAst );
 				continue;
 			}
 			
@@ -165,9 +165,9 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 
 	protected override object? VisitWhile( WhileAst whileAst )
 	{
-		while ( (bool)Visit( whileAst.BooleanExpression )! )
+		while ( (bool)Visit( whileAst.BooleanExpressionAst )! )
 		{
-			var result = Visit( whileAst.Block );
+			var result = Visit( whileAst.BodyAst );
 			if ( Returning )
 				return result;
 		}
@@ -179,10 +179,10 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	{
 		do
 		{
-			var result = Visit( doWhileAst.Block );
+			var result = Visit( doWhileAst.BodyAst );
 			if ( Returning )
 				return result;
-		} while ( (bool)Visit( doWhileAst.BooleanExpression )! );
+		} while ( (bool)Visit( doWhileAst.BooleanExpressionAst )! );
 
 		return null;
 	}
@@ -202,9 +202,9 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	{
 		MethodVariables.Current.TryGetValue( MethodSignature.From( methodCallAst ), out var variable );
 
-		var arguments = new object?[methodCallAst.Arguments.Length];
-		for ( var i = 0; i < methodCallAst.Arguments.Length; i++ )
-			arguments[i] = Visit( methodCallAst.Arguments[i] );
+		var arguments = new object?[methodCallAst.ArgumentAsts.Length];
+		for ( var i = 0; i < methodCallAst.ArgumentAsts.Length; i++ )
+			arguments[i] = Visit( methodCallAst.ArgumentAsts[i] );
 		
 		return ((ScriptMethod)variable!).Invoke( this, arguments );
 	}
@@ -216,10 +216,10 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 
 	protected override object? VisitVariableDeclaration( VariableDeclarationAst variableDeclarationAst )
 	{
-		var defaultValue = Visit( variableDeclarationAst.DefaultExpression ) ??
-		                   variableDeclarationAst.VariableType.TypeProvider.CreateDefault();
+		var defaultValue = Visit( variableDeclarationAst.DefaultExpressionAst ) ??
+		                   variableDeclarationAst.VariableTypeAst.TypeProvider.CreateDefault();
 
-		foreach ( var variable in variableDeclarationAst.VariableNames )
+		foreach ( var variable in variableDeclarationAst.VariableNameAsts )
 			Variables.Current.AddOrUpdate( variable.VariableName, defaultValue );
 
 		return null;

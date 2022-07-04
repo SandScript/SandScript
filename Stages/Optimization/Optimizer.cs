@@ -80,15 +80,15 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 	}
 
 	protected override Ast VisitReturn( ReturnAst returnAst ) =>
-		new ReturnAst( returnAst.StartLocation, Visit( returnAst.Expression ) );
+		new ReturnAst( returnAst.StartLocation, Visit( returnAst.ExpressionAst ) );
 
 	protected override Ast VisitAssignment( AssignmentAst assignmentAst ) =>
-		new AssignmentAst( assignmentAst.Variable, assignmentAst.Operator, Visit( assignmentAst.Expression ) );
+		new AssignmentAst( assignmentAst.VariableAst, assignmentAst.Operator, Visit( assignmentAst.ExpressionAst ) );
 
 	protected override Ast VisitBinaryOperator( BinaryOperatorAst binaryOperatorAst )
 	{
-		var newLeft = Visit( binaryOperatorAst.Left );
-		var newRight = Visit( binaryOperatorAst.Right );
+		var newLeft = Visit( binaryOperatorAst.LeftAst );
+		var newRight = Visit( binaryOperatorAst.RightAst );
 		
 		if ( newLeft is not LiteralAst leftLiteral || newRight is not LiteralAst rightLiteral )
 			return new BinaryOperatorAst( newLeft, binaryOperatorAst.Operator, newRight );
@@ -101,7 +101,7 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 
 	protected override Ast VisitUnaryOperator( UnaryOperatorAst unaryOperatorAst )
 	{
-		var newOperand = Visit( unaryOperatorAst.Operand );
+		var newOperand = Visit( unaryOperatorAst.OperandAst );
 
 		if ( newOperand is not LiteralAst literalAst )
 			return new UnaryOperatorAst( unaryOperatorAst.Operator, newOperand );
@@ -114,13 +114,13 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 
 	protected override Ast VisitIf( IfAst ifAst )
 	{
-		var newBooleanExpression = Visit( ifAst.BooleanExpression );
-		var falseBranch = Visit( ifAst.FalseBranch );
+		var newBooleanExpression = Visit( ifAst.BooleanExpressionAst );
+		var falseBranch = Visit( ifAst.FalseBodyAst );
 		
 		if ( newBooleanExpression is LiteralAst literalAst && !(bool)literalAst.Value )
 			return AddChange( falseBranch );
 		
-		var trueBranch = Visit( ifAst.TrueBranch );
+		var trueBranch = Visit( ifAst.TrueBodyAst );
 		if ( trueBranch is NoOperationAst && falseBranch is NoOperationAst )
 			return AddChange( new NoOperationAst( ifAst.StartLocation ) );
 		
@@ -129,26 +129,26 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 
 	protected override Ast VisitFor( ForAst forAst )
 	{
-		var newBooleanExpression = Visit( forAst.BooleanExpression );
+		var newBooleanExpression = Visit( forAst.BooleanExpressionAst );
 		if ( newBooleanExpression is LiteralAst literalAst && !(bool)literalAst.Value )
 			return AddChange( new NoOperationAst( forAst.StartLocation ) );
 		
-		var newBlock = Visit( forAst.Block );
+		var newBlock = Visit( forAst.BodyAst );
 		if ( newBlock is NoOperationAst )
 			return AddChange( new NoOperationAst( forAst.StartLocation ) );
 
-		var newIterator = Visit( forAst.Iterator );
-		return new ForAst( forAst.StartLocation, forAst.VariableDeclaration, newBooleanExpression,
+		var newIterator = Visit( forAst.IteratorAst );
+		return new ForAst( forAst.StartLocation, forAst.VariableDeclarationAst, newBooleanExpression,
 			(AssignmentAst)newIterator, (BlockAst)newBlock );
 	}
 
 	protected override Ast VisitWhile( WhileAst whileAst )
 	{
-		var newBooleanExpression = Visit( whileAst.BooleanExpression );
+		var newBooleanExpression = Visit( whileAst.BooleanExpressionAst );
 		if ( newBooleanExpression is LiteralAst literalAst && !(bool)literalAst.Value )
 			return AddChange( new NoOperationAst( whileAst.StartLocation ) );
 		
-		var newBlock = Visit( whileAst.Block );
+		var newBlock = Visit( whileAst.BodyAst );
 		return newBlock is NoOperationAst
 			? AddChange( new NoOperationAst( whileAst.StartLocation ) )
 			: new WhileAst( whileAst.StartLocation, newBooleanExpression, (BlockAst)newBlock );
@@ -156,8 +156,8 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 
 	protected override Ast VisitDoWhile( DoWhileAst doWhileAst )
 	{
-		var newBooleanExpression = Visit( doWhileAst.BooleanExpression );
-		var newBlock = Visit( doWhileAst.Block );
+		var newBooleanExpression = Visit( doWhileAst.BooleanExpressionAst );
+		var newBlock = Visit( doWhileAst.BodyAst );
 
 		if ( newBooleanExpression is LiteralAst literalAst && !(bool)literalAst.Value )
 			return AddChange( newBlock );
@@ -170,14 +170,14 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 	// If method is unused and not global. Remove it.
 	protected override Ast VisitMethodDeclaration( MethodDeclarationAst methodDeclarationAst )
 	{
-		foreach ( var parameter in methodDeclarationAst.Parameters )
+		foreach ( var parameter in methodDeclarationAst.ParameterAsts )
 			Visit( parameter );
 		
-		var newScope = Visit( methodDeclarationAst.Scope );
+		var newScope = Visit( methodDeclarationAst.BodyAst );
 		if ( newScope is not NoOperationAst )
 		{
-			return new MethodDeclarationAst( methodDeclarationAst.ReturnType,
-				methodDeclarationAst.MethodNameVariable, methodDeclarationAst.Parameters,
+			return new MethodDeclarationAst( methodDeclarationAst.ReturnTypeAst,
+				methodDeclarationAst.MethodNameAst, methodDeclarationAst.ParameterAsts,
 				(BlockAst)newScope );
 		}
 
@@ -193,7 +193,7 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 			return AddChange( new NoOperationAst( methodCallAst.StartLocation ) );
 
 		var newArguments = ImmutableArray.CreateBuilder<Ast>();
-		foreach ( var argument in methodCallAst.Arguments )
+		foreach ( var argument in methodCallAst.ArgumentAsts )
 			newArguments.Add( Visit( argument ) );
 
 		return new MethodCallAst( methodCallAst.NameToken, newArguments.ToImmutable(), methodCallAst.ArgumentTypes );
@@ -206,8 +206,8 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 
 	// If variable is only set and never gotten while not being a global. Remove it.
 	protected override Ast VisitVariableDeclaration( VariableDeclarationAst variableDeclarationAst ) =>
-		new VariableDeclarationAst( variableDeclarationAst.VariableType, variableDeclarationAst.VariableNames,
-			Visit( variableDeclarationAst.DefaultExpression ) );
+		new VariableDeclarationAst( variableDeclarationAst.VariableTypeAst, variableDeclarationAst.VariableNameAsts,
+			Visit( variableDeclarationAst.DefaultExpressionAst ) );
 
 	// If variable is unused or undefined due to previous optimization. Remove it.
 	protected override Ast VisitVariable( VariableAst variableAst ) => variableAst;

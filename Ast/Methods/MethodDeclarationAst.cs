@@ -4,21 +4,20 @@ namespace SandScript.AbstractSyntaxTrees;
 
 public sealed class MethodDeclarationAst : Ast
 {
-	public readonly VariableTypeAst ReturnType;
-	public readonly VariableAst MethodNameVariable;
-	public readonly ImmutableArray<ParameterAst> Parameters;
-	public readonly BlockAst Scope;
+	public readonly VariableTypeAst ReturnTypeAst;
+	public readonly VariableAst MethodNameAst;
+	public readonly ImmutableArray<ParameterAst> ParameterAsts;
+	public readonly BlockAst BodyAst;
 
-	public readonly string MethodName;
+	public ITypeProvider ReturnType => ReturnTypeAst.TypeProvider;
+	public string MethodName => MethodNameAst.VariableName;
 
-	public MethodDeclarationAst( VariableTypeAst returnType, VariableAst methodNameVariable,
-		ImmutableArray<ParameterAst> parameters, BlockAst scope ) : base( returnType.Token.Location )
+	public MethodDeclarationAst( VariableTypeAst returnTypeAst, VariableAst methodNameAst,
+		ImmutableArray<ParameterAst> parameterAsts, BlockAst bodyAst ) : base( returnTypeAst.Token.Location )
 	{
-		ReturnType = returnType;
-		MethodNameVariable = methodNameVariable;
-		Parameters = parameters;
-		Scope = scope;
-
-		MethodName = (string)MethodNameVariable.Token.Value;
+		ReturnTypeAst = returnTypeAst;
+		MethodNameAst = methodNameAst;
+		ParameterAsts = parameterAsts;
+		BodyAst = bodyAst;
 	}
 }

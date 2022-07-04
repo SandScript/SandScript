@@ -2,12 +2,12 @@
 
 public sealed class WhileAst : Ast
 {
-	public readonly Ast BooleanExpression;
-	public readonly BlockAst Block;
+	public readonly Ast BooleanExpressionAst;
+	public readonly BlockAst BodyAst;
 
-	public WhileAst( TokenLocation location, Ast booleanExpression, BlockAst block ) : base( location )
+	public WhileAst( TokenLocation location, Ast booleanExpressionAst, BlockAst bodyAst ) : base( location )
 	{
-		BooleanExpression = booleanExpression;
-		Block = block;
+		BooleanExpressionAst = booleanExpressionAst;
+		BodyAst = bodyAst;
 	}
 }

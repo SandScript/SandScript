@@ -4,12 +4,10 @@ public sealed class VariableAst : Ast
 {
 	public readonly Token Token;
 
-	public readonly string VariableName;
+	public string VariableName => (string)Token.Value;
 
 	public VariableAst( Token token ) : base( token.Location )
 	{
 		Token = token;
-		
-		VariableName = (string)Token.Value;
 	}
 }

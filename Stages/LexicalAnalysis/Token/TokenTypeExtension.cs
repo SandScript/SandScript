@@ -157,7 +157,7 @@ public static class TokenTypeExtension
 		};
 	}
 
-	public static ITypeProvider GetOperatorResultType( this TokenType tokenType )
+	public static ITypeProvider GetOperatorResultType( this TokenType tokenType, ITypeProvider inputType )
 	{
 		return tokenType switch
 		{
@@ -168,7 +168,7 @@ public static class TokenTypeExtension
 			TokenType.LessThan => TypeProviders.Builtin.Boolean,
 			TokenType.LessThanEquals => TypeProviders.Builtin.Boolean,
 			TokenType.Bang => TypeProviders.Builtin.Boolean,
-			_ => TypeProviders.Builtin.Variable
+			_ => inputType
 		};
 	}
 

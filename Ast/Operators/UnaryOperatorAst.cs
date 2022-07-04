@@ -3,11 +3,13 @@
 public sealed class UnaryOperatorAst : Ast
 {
 	public readonly Token Operator;
-	public readonly Ast Operand;
+	public readonly Ast OperandAst;
 
-	public UnaryOperatorAst( Token op, Ast operand ) : base( op.Location )
+	public TokenType OperatorType => Operator.Type;
+
+	public UnaryOperatorAst( Token op, Ast operandAst ) : base( op.Location )
 	{
 		Operator = op;
-		Operand = operand;
+		OperandAst = operandAst;
 	}
 }

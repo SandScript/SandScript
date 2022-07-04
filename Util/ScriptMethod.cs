@@ -46,14 +46,14 @@ public class ScriptMethod : IEquatable<ScriptMethod>
 	internal ScriptMethod( MethodDeclarationAst methodDeclarationAst )
 	{
 		Name = methodDeclarationAst.MethodName;
-		ReturnTypeProvider = methodDeclarationAst.ReturnType.TypeProvider;
+		ReturnTypeProvider = methodDeclarationAst.ReturnTypeAst.TypeProvider;
 
 		_isCsMethod = false;
 		MethodDeclarationAst = methodDeclarationAst;
 
 		var parameters = new List<(string, ITypeProvider)>();
-		foreach ( var parameter in methodDeclarationAst.Parameters )
-			parameters.Add( (parameter.ParameterName.VariableName, parameter.ParameterType.TypeProvider) );
+		foreach ( var parameter in methodDeclarationAst.ParameterAsts )
+			parameters.Add( (parameter.ParameterNameAst.VariableName, parameter.ParameterTypeAst.TypeProvider) );
 		Parameters = parameters;
 		
 		Signature = MethodSignature.From( this );
@@ -86,7 +86,7 @@ public class ScriptMethod : IEquatable<ScriptMethod>
 				parameters.Add( Parameters[i].Item1, values[i] );
 			
 			interpreter.Variables.Enter( Guid.Empty, parameters );
-			var result = interpreter.Visit( MethodDeclarationAst!.Scope );
+			var result = interpreter.Visit( MethodDeclarationAst!.BodyAst );
 			interpreter.Variables.Leave();
 
 			interpreter.Returning = false;

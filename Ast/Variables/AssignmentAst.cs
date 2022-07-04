@@ -2,14 +2,17 @@
 
 public sealed class AssignmentAst : Ast
 {
-	public readonly VariableAst Variable;
+	public readonly VariableAst VariableAst;
 	public readonly Token Operator;
-	public readonly Ast Expression;
+	public readonly Ast ExpressionAst;
 
-	public AssignmentAst( VariableAst variable, Token op, Ast expression ) : base( variable.Token.Location )
+	public string VariableName => VariableAst.VariableName;
+	public TokenType OperatorType => Operator.Type;
+
+	public AssignmentAst( VariableAst variableAst, Token op, Ast expressionAst ) : base( variableAst.Token.Location )
 	{
-		Variable = variable;
+		VariableAst = variableAst;
 		Operator = op;
-		Expression = expression;
+		ExpressionAst = expressionAst;
 	}
 }

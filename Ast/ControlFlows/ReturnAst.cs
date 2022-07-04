@@ -2,10 +2,10 @@
 
 public sealed class ReturnAst : Ast
 {
-	public readonly Ast Expression;
+	public readonly Ast ExpressionAst;
 
-	public ReturnAst( TokenLocation location, Ast expression ) : base( location )
+	public ReturnAst( TokenLocation location, Ast expressionAst ) : base( location )
 	{
-		Expression = expression;
+		ExpressionAst = expressionAst;
 	}
 }
