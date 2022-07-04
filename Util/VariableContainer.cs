@@ -94,9 +94,11 @@ public class VariableContainer<TKey, TValue> : IDictionary<TKey, TValue> where T
 		Add( key, value );
 	}
 
-	public bool TryGetValue( TKey key, out TValue value ) => TryGetValue( key, out value, out _ );
+	public bool TryGetValue( TKey key, [MaybeNullWhen( false )] out TValue value ) =>
+		TryGetValue( key, out value, out _ );
 
-	public bool TryGetValue( TKey key, out TValue value, out VariableContainer<TKey, TValue> container )
+	public bool TryGetValue( TKey key, [MaybeNullWhen( false )] out TValue value,
+		[MaybeNullWhen( false )] out VariableContainer<TKey, TValue> container )
 	{
 		if ( !ContainsKey( key, true, out container ) )
 		{
