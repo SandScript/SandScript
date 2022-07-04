@@ -87,14 +87,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	protected override ITypeProvider VisitProgram( ProgramAst programAst )
 	{
 		foreach ( var statement in programAst.Statements )
-		{
-			var value = Visit( statement );
-			if ( value == TypeProviders.Builtin.Nothing )
-				continue;
-
-			LeaveScope();
-			return value;
-		}
+			Visit( statement );
 
 		return TypeProviders.Builtin.Nothing;
 	}
@@ -103,14 +96,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	{
 		EnterScope( blockAst.Guid );
 		foreach ( var statement in blockAst.Statements )
-		{
-			var value = Visit( statement );
-			if ( value == TypeProviders.Builtin.Nothing )
-				continue;
-
-			LeaveScope();
-			return value;
-		}
+			Visit( statement );
 		LeaveScope();
 
 		return TypeProviders.Builtin.Nothing;
@@ -118,10 +104,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	
 	protected override ITypeProvider VisitReturn( ReturnAst returnAst )
 	{
-		var result = TypeProviders.Builtin.Nothing;
-		if ( returnAst.Expression is not NoOperationAst )
-			result = Visit( returnAst.Expression );
-
+		var result = Visit( returnAst.ExpressionAst );
 		if ( !VerifyTypeLoose( result, out var expectedType ) )
 			_diagnostics.TypeMismatch( expectedType, result, returnAst.StartLocation );
 		
@@ -130,21 +113,22 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	
 	protected override ITypeProvider VisitAssignment( AssignmentAst assignmentAst )
 	{
-		if ( !VariableTypes.Current.TryGetValue( assignmentAst.Variable.VariableName, out var type ) )
+		var variableName = assignmentAst.VariableName;
+		if ( !VariableTypes.Current.TryGetValue( variableName, out var type ) )
 		{
-			_diagnostics.Undefined( assignmentAst.Variable.VariableName );
+			_diagnostics.Undefined( variableName );
 			return TypeProviders.Builtin.Nothing;
 		}
 
-		if ( _variableExternals.Current.TryGetValue( assignmentAst.Variable.VariableName, out var variable ) && !variable.CanWrite )
+		if ( _variableExternals.Current.TryGetValue( variableName, out var variable ) && !variable.CanWrite )
 		{
-			_diagnostics.Unwritable( assignmentAst.Variable.VariableName );
+			_diagnostics.Unwritable( variableName );
 			return TypeProviders.Builtin.Nothing;
 		}
 
 		_neededTypes.Push( type );
-		if ( assignmentAst.Operator.Type.GetBinaryOperatorOfAssignment() != TokenType.None )
-			Visit( assignmentAst.Expression );
+		if ( assignmentAst.OperatorType.GetBinaryOperatorOfAssignment() != TokenType.None )
+			Visit( assignmentAst.ExpressionAst );
 		_neededTypes.Pop();
 
 		return TypeProviders.Builtin.Nothing;
@@ -152,55 +136,53 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	
 	protected override ITypeProvider VisitBinaryOperator( BinaryOperatorAst binaryOperatorAst )
 	{
-		var leftType = VisitExpectingType( TypeProviders.Builtin.Variable, binaryOperatorAst.Left );
-		VisitExpectingType( leftType, binaryOperatorAst.Right );
-		var operandResultType = binaryOperatorAst.Operator.Type.GetOperatorResultType();
-		operandResultType = operandResultType == TypeProviders.Builtin.Variable
-			? leftType
-			: operandResultType;
+		var leftType = VisitExpectingType( TypeProviders.Builtin.Variable, binaryOperatorAst.LeftAst );
+		VisitExpectingType( leftType, binaryOperatorAst.RightAst );
+
+		var operatorType = binaryOperatorAst.OperatorType;
+		var operandResultType = operatorType.GetOperatorResultType( leftType );
 		
 		if ( !VerifyTypeLoose( operandResultType, out var expectedType ) )
 			_diagnostics.TypeMismatch( expectedType, leftType, binaryOperatorAst.StartLocation );
 
-		if ( leftType.BinaryOperations.ContainsKey( binaryOperatorAst.Operator.Type ) )
+		if ( leftType.BinaryOperations.ContainsKey( operatorType ) )
 			return leftType;
 
-		_diagnostics.UnsupportedBinaryOperatorForType( binaryOperatorAst.Operator.Type, leftType, binaryOperatorAst.StartLocation );
+		_diagnostics.UnsupportedBinaryOperatorForType( operatorType, leftType, binaryOperatorAst.StartLocation );
 		return leftType;
 	}
 
 	protected override ITypeProvider VisitUnaryOperator( UnaryOperatorAst unaryOperatorAst )
 	{
-		var operandType = VisitExpectingType( TypeProviders.Builtin.Variable, unaryOperatorAst.Operand );
-		var operandResultType = unaryOperatorAst.Operator.Type.GetOperatorResultType();
-		operandResultType = operandResultType == TypeProviders.Builtin.Variable
-			? operandType
-			: operandResultType;
+		var operandType = VisitExpectingType( TypeProviders.Builtin.Variable, unaryOperatorAst.OperandAst );
+
+		var operatorType = unaryOperatorAst.OperatorType;
+		var operandResultType = operatorType.GetOperatorResultType( operandType );
 		
 		if ( !VerifyTypeLoose( operandResultType, out var expectedType ) )
 			_diagnostics.TypeMismatch( expectedType, operandType, unaryOperatorAst.StartLocation );
 
-		if ( operandType.UnaryOperations.ContainsKey( unaryOperatorAst.Operator.Type ) )
+		if ( operandType.UnaryOperations.ContainsKey( operatorType ) )
 			return operandType;
 		
-		_diagnostics.UnsupportedUnaryOperatorForType( unaryOperatorAst.Operator.Type, operandType, unaryOperatorAst.StartLocation );
+		_diagnostics.UnsupportedUnaryOperatorForType( operatorType, operandType, unaryOperatorAst.StartLocation );
 		return operandType;
 	}
 	
 	protected override ITypeProvider VisitIf( IfAst ifAst )
 	{
-		VisitExpectingType( TypeProviders.Builtin.Boolean, ifAst.BooleanExpression );
+		VisitExpectingType( TypeProviders.Builtin.Boolean, ifAst.BooleanExpressionAst );
 		
-		var result = Visit( ifAst.TrueBranch );
+		var result = Visit( ifAst.TrueBodyAst );
 		if ( !VerifyTypeLoose( result, out var expectedType ) )
-			_diagnostics.TypeMismatch( expectedType, result, ifAst.TrueBranch.StartLocation );
+			_diagnostics.TypeMismatch( expectedType, result, ifAst.TrueBodyAst.StartLocation );
 
-		if ( ifAst.FalseBranch is NoOperationAst )
+		if ( ifAst.FalseBodyAst is NoOperationAst )
 			return result;
 		
-		result = Visit( ifAst.FalseBranch );
+		result = Visit( ifAst.FalseBodyAst );
 		if ( !VerifyTypeLoose( result, out expectedType ) )
-			_diagnostics.TypeMismatch( expectedType, result, ifAst.FalseBranch.StartLocation );
+			_diagnostics.TypeMismatch( expectedType, result, ifAst.FalseBodyAst.StartLocation );
 
 		return result;
 	}
@@ -208,10 +190,10 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	protected override ITypeProvider VisitFor( ForAst forAst )
 	{
 		EnterScope( forAst.Guid );
-		VisitExpectingType( TypeProviders.Builtin.Number, forAst.VariableDeclaration );
-		VisitExpectingType( TypeProviders.Builtin.Boolean, forAst.BooleanExpression );
-		VisitExpectingType( TypeProviders.Builtin.Nothing, forAst.Iterator );
-		var result = Visit( forAst.Block );
+		VisitExpectingType( TypeProviders.Builtin.Number, forAst.VariableDeclarationAst );
+		VisitExpectingType( TypeProviders.Builtin.Boolean, forAst.BooleanExpressionAst );
+		VisitExpectingType( TypeProviders.Builtin.Nothing, forAst.IteratorAst );
+		var result = Visit( forAst.BodyAst );
 		LeaveScope();
 
 		return result;
@@ -219,14 +201,14 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	
 	protected override ITypeProvider VisitWhile( WhileAst whileAst )
 	{
-		VisitExpectingType( TypeProviders.Builtin.Boolean, whileAst.BooleanExpression );
-		return Visit( whileAst.Block );
+		VisitExpectingType( TypeProviders.Builtin.Boolean, whileAst.BooleanExpressionAst );
+		return Visit( whileAst.BodyAst );
 	}
 
 	protected override ITypeProvider VisitDoWhile( DoWhileAst doWhileAst )
 	{
-		VisitExpectingType( TypeProviders.Builtin.Boolean, doWhileAst.BooleanExpression );
-		return Visit( doWhileAst.Block );
+		VisitExpectingType( TypeProviders.Builtin.Boolean, doWhileAst.BooleanExpressionAst );
+		return Visit( doWhileAst.BodyAst );
 	}
 
 	protected override ITypeProvider VisitMethodDeclaration( MethodDeclarationAst methodDeclarationAst )
@@ -243,9 +225,9 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		VariableMethods.Current.AddOrUpdate( methodSignature, new ScriptMethod( methodDeclarationAst ) );
 
 		EnterScope( methodDeclarationAst.Guid );
-		foreach ( var parameter in methodDeclarationAst.Parameters )
+		foreach ( var parameter in methodDeclarationAst.ParameterAsts )
 			Visit( parameter );
-		VisitExpectingType( methodDeclarationAst.ReturnType.TypeProvider, methodDeclarationAst.Scope );
+		Visit( methodDeclarationAst.BodyAst );
 		LeaveScope();
 			
 		return TypeProviders.Builtin.Nothing;
@@ -253,7 +235,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 
 	protected override ITypeProvider VisitMethodCall( MethodCallAst methodCallAst )
 	{
-		foreach ( var argument in methodCallAst.Arguments )
+		foreach ( var argument in methodCallAst.ArgumentAsts )
 		{
 			var argumentType = VisitExpectingType( TypeProviders.Builtin.Variable, argument );
 			methodCallAst.ArgumentTypes = methodCallAst.ArgumentTypes.Add( argumentType );
@@ -269,7 +251,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		if ( !VerifyTypeLoose( method.ReturnTypeProvider, out var expectedType ) )
 			_diagnostics.TypeMismatch( expectedType, method.ReturnTypeProvider, methodCallAst.StartLocation );
 
-		var numArguments = methodCallAst.Arguments.Length;
+		var numArguments = methodCallAst.ArgumentAsts.Length;
 		if ( numArguments != method.Parameters.Count )
 			_diagnostics.ArgumentCountMismatch( method.Parameters.Count, numArguments, methodCallAst.StartLocation );
 
@@ -282,7 +264,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 				continue;
 			}
 			
-			VisitExpectingType( parameter.Item2, methodCallAst.Arguments[i] );
+			VisitExpectingType( parameter.Item2, methodCallAst.ArgumentAsts[i] );
 		}
 		
 		return method.ReturnTypeProvider;
@@ -290,22 +272,21 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 
 	protected override ITypeProvider VisitParameter( ParameterAst parameterAst )
 	{
-		VariableTypes.Current.AddOrUpdate( parameterAst.ParameterName.VariableName, parameterAst.ParameterType.TypeProvider );
-		return parameterAst.ParameterType.TypeProvider;
+		VariableTypes.Current.AddOrUpdate( parameterAst.ParameterName, parameterAst.ParameterType );
+		return parameterAst.ParameterType;
 	}
 
 	protected override ITypeProvider VisitVariableDeclaration( VariableDeclarationAst variableDeclarationAst )
 	{
-		var value = VisitExpectingType( variableDeclarationAst.VariableType.TypeProvider,
-			variableDeclarationAst.DefaultExpression );
-		value = value != TypeProviders.Builtin.Nothing
-			? value
-			: variableDeclarationAst.VariableType.TypeProvider;
+		var value = VisitExpectingType( variableDeclarationAst.VariableType,
+			variableDeclarationAst.DefaultExpressionAst );
+		if ( value == TypeProviders.Builtin.Nothing )
+			value = variableDeclarationAst.VariableType;
 		
 		if ( value == TypeProviders.Builtin.Nothing || value == TypeProviders.Builtin.Variable )
 			_diagnostics.MissingType( variableDeclarationAst.StartLocation );
 		
-		foreach ( var variable in variableDeclarationAst.VariableNames )
+		foreach ( var variable in variableDeclarationAst.VariableNameAsts )
 		{
 			var variableName = variable.VariableName;
 			
@@ -323,15 +304,16 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 
 	protected override ITypeProvider VisitVariable( VariableAst variableAst )
 	{
-		if ( !VariableTypes.Current.TryGetValue( variableAst.VariableName, out var variableType ) )
+		var variableName = variableAst.VariableName;
+		if ( !VariableTypes.Current.TryGetValue( variableName, out var variableType ) )
 		{
-			_diagnostics.Undefined( variableAst.VariableName );
+			_diagnostics.Undefined( variableName );
 			return TypeProviders.Builtin.Nothing;
 		}
 
-		if ( _variableExternals.Current.TryGetValue( variableAst.VariableName, out var variable ) && !variable.CanRead )
+		if ( _variableExternals.Current.TryGetValue( variableName, out var variable ) && !variable.CanRead )
 		{
-			_diagnostics.Unreadable( variableAst.VariableName );
+			_diagnostics.Unreadable( variableName );
 			return variable.TypeProvider;
 		}
 		
@@ -346,10 +328,11 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	
 	protected override ITypeProvider VisitLiteral( LiteralAst literalAst )
 	{
-		if ( !VerifyTypeLoose( literalAst.TypeProvider, out var expectedType ) )
-			_diagnostics.TypeMismatch( expectedType, literalAst.TypeProvider, literalAst.StartLocation );
+		var typeProvider = literalAst.TypeProvider;
+		if ( !VerifyTypeLoose( typeProvider, out var expectedType ) )
+			_diagnostics.TypeMismatch( expectedType, typeProvider, literalAst.StartLocation );
 		
-		return literalAst.TypeProvider;
+		return typeProvider;
 	}
 
 	protected override ITypeProvider VisitNoOperation( NoOperationAst noOperationAst ) =>
