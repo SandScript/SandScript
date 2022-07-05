@@ -14,8 +14,8 @@ public sealed class Interpreter : NodeVisitor<object?>
 		new(new IgnoreHashCodeComparer<MethodSignature>());
 	
 	internal bool Returning;
+	internal readonly InterpreterDiagnostics Diagnostics = new();
 	
-	private readonly InterpreterDiagnostics _diagnostics = new();
 
 	private Interpreter()
 	{
