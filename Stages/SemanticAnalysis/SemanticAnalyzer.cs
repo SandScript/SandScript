@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript;
@@ -13,11 +10,11 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>
 		new(new IgnoreHashCodeComparer<MethodSignature>());
 	private readonly VariableManager<string, ScriptVariable> _variableExternals = new(null);
 	
-	private readonly TypeCheckStack _neededTypes = new();
 	internal readonly SemanticAnalyzerDiagnostics Diagnostics = new();
 	
+	private readonly TypeCheckStack _neededTypes = new();
 
-	private SemanticAnalyzer()
+	internal SemanticAnalyzer()
 	{
 		foreach ( var method in SandScript.CustomMethods )
 		{
@@ -33,7 +30,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>
 		}
 	}
 
-	private bool AnalyzeTree( Ast ast )
+	public bool AnalyzeAst( Ast ast )
 	{
 		Visit( ast );
 		
@@ -328,8 +325,13 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>
 		return TypeProviders.Builtin.Nothing;
 	}
 
-	public static bool Analyze( Ast ast )
+	public static bool Analyze( Ast ast ) => Analyze( ast, out _ );
+	public static bool Analyze( Ast ast, out StageDiagnostics diagnostics )
 	{
-		return new SemanticAnalyzer().AnalyzeTree( ast );
+		var analyzer = new SemanticAnalyzer();
+		var result = analyzer.AnalyzeAst( ast );
+		diagnostics = analyzer.Diagnostics;
+
+		return result;
 	}
 }
