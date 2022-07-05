@@ -1,23 +1,21 @@
 ﻿using System;
-using System.Diagnostics;
 using SandScript.AbstractSyntaxTrees;
-using SandScript.Exceptions;
 
 namespace SandScript;
 
 public sealed class Interpreter : NodeVisitor<object?>
 {
-	internal Script Owner { get; private set; }
+	internal readonly Script Owner;
 
 	internal readonly VariableManager<string, object?> Variables = new(null);
 	internal readonly VariableManager<MethodSignature, object?> MethodVariables =
 		new(new IgnoreHashCodeComparer<MethodSignature>());
 	
-	internal bool Returning;
 	internal readonly InterpreterDiagnostics Diagnostics = new();
 	
+	internal bool Returning;
 
-	private Interpreter()
+	internal Interpreter()
 	{
 		Owner = null!;
 		
@@ -32,7 +30,7 @@ public sealed class Interpreter : NodeVisitor<object?>
 			Variables.Root.Add( variable.Name, variable );
 	}
 
-	private object? Interpret( Ast ast )
+	public object? Interpret( Ast ast )
 	{
 		return Visit( ast );
 	}
