@@ -2,7 +2,7 @@
 
 namespace SandScript;
 
-public sealed class TokenLocation
+public sealed class TokenLocation : IEquatable<TokenLocation>
 {
 	public static readonly TokenLocation Zero = new(0, 0);
 	
@@ -15,13 +15,36 @@ public sealed class TokenLocation
 		Column = column;
 	}
 
-	public override string ToString() => Row + ":" + Column;
-	
-	private bool Equals(TokenLocation other) => Row == other.Row && Column == other.Column;
-	public override bool Equals(object? obj) => obj is TokenLocation other && Equals(other);
-	public override int GetHashCode() => HashCode.Combine(Row, Column);
+	public override string ToString()
+	{
+		return Row + ":" + Column;
+	}
 
-	public static bool operator ==( TokenLocation left, TokenLocation right ) =>
-		left.Row == right.Row && left.Column == right.Column;
-	public static bool operator !=( TokenLocation left, TokenLocation right ) => !(left == right);
+	public bool Equals( TokenLocation? other )
+	{
+		if ( other is null )
+			return false;
+		
+		return Row == other.Row && Column == other.Column;
+	}
+
+	public override bool Equals( object? obj )
+	{
+		return obj is TokenLocation other && Equals( other );
+	}
+
+	public override int GetHashCode()
+	{
+		return HashCode.Combine( Row, Column );
+	}
+
+	public static bool operator ==( TokenLocation left, TokenLocation right )
+	{
+		return left.Row == right.Row && left.Column == right.Column;
+	}
+
+	public static bool operator !=( TokenLocation left, TokenLocation right )
+	{
+		return !(left == right);
+	}
 }

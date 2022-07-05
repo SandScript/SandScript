@@ -31,7 +31,6 @@ public class Script
 	}
 
 	public void AddStage<T>() where T : IStage => AddStage( (T)Activator.CreateInstance( typeof(T), true )! );
-
 	private void AddStage<T>( T stage ) where T : IStage
 	{
 		if ( stage.PrerequisiteStage is not null && !HasStage( stage.PrerequisiteStage, out _ ) )
@@ -44,9 +43,7 @@ public class Script
 	}
 
 	public bool HasStage<T>() where T : IStage => HasStage( typeof(T), out _ );
-
 	private bool HasStage<T>( [NotNullWhen( true )] out int? index ) => HasStage( typeof(T), out index );
-	
 	private bool HasStage( Type stageType, [NotNullWhen(true)] out int? index )
 	{
 		for ( var i = 0; i < _stages.Count; i++ )
@@ -173,7 +170,6 @@ public class Script
 	}
 
 	public ScriptValue? Execute( string text ) => Execute( text, out ScriptDiagnostics _ );
-
 	public ScriptValue? Execute( string text, out ScriptDiagnostics diagnostics )
 	{
 		if ( !HasStage<Interpreter>() )
@@ -189,11 +185,13 @@ public class Script
 		return ScriptValue.From( results[0] );
 	}
 
-	public static Script Create() => new();
+	public static Script Create()
+	{
+		return new Script();
+	}
 
 	public static Script Execute( string text, out ScriptValue? returnValue ) =>
 		Execute( text, out returnValue, out _ );
-
 	public static Script Execute( string text, out ScriptValue? returnValue, out ScriptDiagnostics diagnostics )
 	{
 		var script = Create();

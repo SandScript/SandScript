@@ -16,9 +16,15 @@ public static class TypeProviders
 		new StringTypeProvider()
 	};
 
-	public static void Register<T>( T provider ) where T : ITypeProvider => Types.Add( provider );
+	public static void Register<T>( T provider ) where T : ITypeProvider
+	{
+		Types.Add( provider );
+	}
 
-	public static IEnumerable<ITypeProvider> GetAll() => Types;
+	public static IEnumerable<ITypeProvider> GetAll()
+	{
+		return Types;
+	}
 
 	public static ITypeProvider? Get<T>() where T : ITypeProvider
 	{
@@ -65,6 +71,11 @@ public static class TypeProviders
 		}
 
 		return null;
+	}
+
+	public static ITypeProvider? GetByValue( object? value )
+	{
+		return value is null ? Builtin.Nothing : GetByType( value.GetType() );
 	}
 
 	public static class Builtin

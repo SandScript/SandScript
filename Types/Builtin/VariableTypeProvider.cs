@@ -5,8 +5,6 @@ namespace SandScript;
 
 public sealed class VariableTypeProvider : ITypeProvider
 {
-	public override string ToString() => "Any";
-	
 	public string TypeName => "Variable";
 	public string TypeIdentifier => "var";
 	
@@ -23,5 +21,13 @@ public sealed class VariableTypeProvider : ITypeProvider
 		return left.Equals( right );
 	}
 
-	public object? CreateDefault() => default;
+	public object? CreateDefault()
+	{
+		return default;
+	}
+
+	public override string ToString()
+	{
+		return "Any";
+	}
 }

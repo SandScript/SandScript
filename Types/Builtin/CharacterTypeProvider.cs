@@ -6,8 +6,6 @@ namespace SandScript;
 
 public sealed class CharacterTypeProvider : ILiteralTypeProvider
 {
-	public override string ToString() => TypeName;
-	
 	public string TypeName => "Character";
 	public string TypeIdentifier => "char";
 	
@@ -21,9 +19,15 @@ public sealed class CharacterTypeProvider : ILiteralTypeProvider
 	
 	public Dictionary<TokenType, Func<object?, object?>> UnaryOperations { get; } = new();
 
-	public bool Compare( object? left, object? right ) => (char)left! == (char)right!;
-	
-	public object CreateDefault() => default(char);
+	public bool Compare( object? left, object? right )
+	{
+		return (char)left! == (char)right!;
+	}
+
+	public object CreateDefault()
+	{
+		return default(char);
+	}
 
 	public object? GetLiteral( Lexer lexer )
 	{
@@ -43,10 +47,24 @@ public sealed class CharacterTypeProvider : ILiteralTypeProvider
 
 		return character;
 	}
-	
-	public LiteralAst? GetLiteralAst( Token token ) => token.Value is char ? new LiteralAst( token, this ) : null;
-	
-	private static object? BinEquals( object? left, object? right ) => (char)left! == (char)right!;
 
-	private static object? BinNotEquals( object? left, object? right ) => !(bool)BinEquals( left, right )!;
+	public LiteralAst? GetLiteralAst( Token token )
+	{
+		return token.Value is char ? new LiteralAst( token, this ) : null;
+	}
+
+	public override string ToString()
+	{
+		return TypeName;
+	}
+
+	private static object? BinEquals( object? left, object? right )
+	{
+		return (char)left! == (char)right!;
+	}
+
+	private static object? BinNotEquals( object? left, object? right )
+	{
+		return !(bool)BinEquals( left, right )!;
+	}
 }

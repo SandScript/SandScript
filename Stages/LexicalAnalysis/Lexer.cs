@@ -27,7 +27,10 @@ public sealed class Lexer : IStage
     {
     }
 
-	internal Lexer( string text, bool lexNonEssentialTokens ) => Init( text, lexNonEssentialTokens );
+	internal Lexer( string text, bool lexNonEssentialTokens )
+	{
+		Init( text, lexNonEssentialTokens );
+	}
 
 	StageResult IStage.Run( Script owner, object?[] arguments )
 	{
@@ -47,11 +50,32 @@ public sealed class Lexer : IStage
 		} while ( tokens[^1].Type != TokenType.Eof );
 		
 		sw.Stop();
+		
 		Diagnostics.Time( sw.Elapsed.TotalMilliseconds );
-
 		return Diagnostics.Errors.Count == 0
 			? StageResult.Success( tokens.ToImmutable() )
 			: StageResult.Fail( tokens.ToImmutable() );
+	}
+	
+	private bool Init( string text, bool lexNonEssentialTokens )
+	{
+		if ( string.IsNullOrWhiteSpace( text ) )
+		{
+			Diagnostics.NoCode();
+			Text = string.Empty;
+			return false;
+		}
+
+		Position = 0;
+		Row = 1;
+		Column = 1;
+	    
+		Text = text;
+		_lexNonEssentialTokens = lexNonEssentialTokens;
+		CurrentChar = text[Position];
+		IsCurrentEof = CurrentChar == '\0';
+
+		return true;
 	}
 	
 	public Token GetNextToken()
@@ -116,7 +140,9 @@ public sealed class Lexer : IStage
 	    
 	    Position++;
 	    if ( Position > Text.Length - 1 )
+	    {
 		    CurrentChar = '\0';
+	    }
 	    else
 	    {
 		    CurrentChar = Text[Position];
@@ -130,27 +156,6 @@ public sealed class Lexer : IStage
     {
 	    var peekPosition = Position + count;
 	    return peekPosition > Text.Length - 1 ? '\0' : Text[peekPosition];
-    }
-    
-    private bool Init( string text, bool lexNonEssentialTokens )
-    {
-	    if ( string.IsNullOrWhiteSpace( text ) )
-	    {
-		    Diagnostics.NoCode();
-		    Text = string.Empty;
-		    return false;
-	    }
-
-	    Position = 0;
-		Row = 1;
-		Column = 1;
-	    
-	    Text = text;
-	    _lexNonEssentialTokens = lexNonEssentialTokens;
-	    CurrentChar = text[Position];
-	    IsCurrentEof = CurrentChar == '\0';
-
-	    return true;
     }
 
     private Token GetWhitespaceToken()
@@ -267,5 +272,18 @@ public sealed class Lexer : IStage
 
 	    token = new Token( tokenType.Value, str, row, column );
 	    return true;
+    }
+
+    public static ImmutableArray<Token> Lex( string text, bool lexNonEssentialTokens = false )
+    {
+	    var lexer = new Lexer( text, lexNonEssentialTokens );
+	    var tokens = ImmutableArray.CreateBuilder<Token>();
+
+	    do
+	    {
+		    tokens.Add( lexer.GetNextToken() );
+	    } while ( tokens[^1].Type != TokenType.Eof );
+
+	    return tokens.ToImmutable();
     }
 }

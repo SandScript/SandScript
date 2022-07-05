@@ -6,8 +6,6 @@ namespace SandScript;
 
 public sealed class BooleanTypeProvider : ILiteralTypeProvider
 {
-	public override string ToString() => TypeName;
-
 	public string TypeName => "Boolean";
 	public string TypeIdentifier => "bool";
 
@@ -26,9 +24,15 @@ public sealed class BooleanTypeProvider : ILiteralTypeProvider
 		{TokenType.Bang, Flip}
 	};
 
-	public bool Compare( object? left, object? right ) => (bool)left! == (bool)right!;
+	public bool Compare( object? left, object? right )
+	{
+		return (bool)left! == (bool)right!;
+	}
 
-	public object CreateDefault() => default(bool);
+	public object CreateDefault()
+	{
+		return default(bool);
+	}
 
 	public object? GetLiteral( Lexer lexer )
 	{
@@ -55,16 +59,38 @@ public sealed class BooleanTypeProvider : ILiteralTypeProvider
 		return null;
 	}
 
-	public LiteralAst? GetLiteralAst( Token token ) =>
-		token.Value is bool ? new LiteralAst( token, this ) : null;
+	public LiteralAst? GetLiteralAst( Token token )
+	{
+		return token.Value is bool ? new LiteralAst( token, this ) : null;
+	}
 
-	private static object And( object? left, object? right ) => (bool)left! && (bool)right!;
+	public override string ToString()
+	{
+		return TypeName;
+	}
 
-	private static object Or( object? left, object? right ) => (bool)left! || (bool)right!;
+	private static object And( object? left, object? right )
+	{
+		return (bool)left! && (bool)right!;
+	}
 
-	private static object? Flip( object? operand ) => !(bool)operand!;
-	
-	private static object? BinEquals( object? left, object? right ) => (bool)left! == (bool)right!;
+	private static object Or( object? left, object? right )
+	{
+		return (bool)left! || (bool)right!;
+	}
 
-	private static object? BinNotEquals( object? left, object? right ) => !(bool)BinEquals( left, right )!;
+	private static object? Flip( object? operand )
+	{
+		return !(bool)operand!;
+	}
+
+	private static object? BinEquals( object? left, object? right )
+	{
+		return (bool)left! == (bool)right!;
+	}
+
+	private static object? BinNotEquals( object? left, object? right )
+	{
+		return !(bool)BinEquals( left, right )!;
+	}
 }

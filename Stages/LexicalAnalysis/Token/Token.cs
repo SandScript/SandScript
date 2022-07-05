@@ -2,11 +2,10 @@
 
 namespace SandScript;
 
-public sealed class Token
+public sealed class Token : IEquatable<Token>
 {
 	public TokenType Type { get; }
 	public object Value { get; }
-
 	public TokenLocation Location { get; }
 
 	public Token( TokenType type, object value, int row, int column )
@@ -21,16 +20,26 @@ public sealed class Token
 		Location = location;
 	}
 
-	private bool Equals( Token other ) =>
-		Type == other.Type && Value.Equals( other.Value ) && Location.Equals( other.Location );
+	public bool Equals( Token? other )
+	{
+		if ( other is null )
+			return false;
+		
+		return Type == other.Type && Value.Equals( other.Value ) && Location.Equals( other.Location );
+	}
 
-	public override bool Equals( object? obj ) => ReferenceEquals( this, obj ) || obj is Token other && Equals( other );
+	public override bool Equals( object? obj )
+	{
+		return obj is Token other && Equals( other );
+	}
 
-	public override int GetHashCode() => HashCode.Combine( (int)Type, Value, Location );
+	public override int GetHashCode()
+	{
+		return HashCode.Combine( (int)Type, Value, Location );
+	}
 
-	public override string ToString() => Type.ToString() + ':' + Value + " (" + Location + ')';
-
-	public static bool operator ==( Token left, Token right ) => left.Equals( right );
-
-	public static bool operator !=( Token left, Token right ) => !(left == right);
+	public override string ToString()
+	{
+		return Type.ToString() + ':' + Value + " (" + Location + ')';
+	}
 }

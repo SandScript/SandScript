@@ -16,9 +16,10 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	internal readonly VariableManager<MethodSignature, ScriptMethod> VariableMethods =
 		new(new IgnoreHashCodeComparer<MethodSignature>());
 	private readonly VariableManager<string, ScriptVariable> _variableExternals = new(null);
-
-	private readonly SemanticAnalyzerDiagnostics _diagnostics = new();
+	
 	private readonly TypeCheckStack _neededTypes = new();
+	
+	private readonly SemanticAnalyzerDiagnostics _diagnostics = new();
 
 	private SemanticAnalyzer()
 	{
@@ -42,12 +43,10 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 			throw new ArgumentException( null, nameof(arguments) );
 
 		var sw = Stopwatch.StartNew();
-
 		var result = AnalyzeTree( ast );
-		
 		sw.Stop();
-		_diagnostics.Time( sw.Elapsed.TotalMilliseconds );
 		
+		_diagnostics.Time( sw.Elapsed.TotalMilliseconds );
 		return result ? StageResult.Success( ast ) : StageResult.Fail( ast );
 	}
 
@@ -67,8 +66,10 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		return result;
 	}
 
-	private bool VerifyTypeLoose( ITypeProvider type, [NotNullWhen(false)] out ITypeProvider? expectedType ) =>
-		_neededTypes.AssertTypeCheckLoose( type, out expectedType );
+	private bool VerifyTypeLoose( ITypeProvider type, [NotNullWhen( false )] out ITypeProvider? expectedType )
+	{
+		return _neededTypes.AssertTypeCheckLoose( type, out expectedType );
+	}
 
 	protected override ITypeProvider VisitProgram( ProgramAst programAst )
 	{
@@ -315,9 +316,11 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		return variableType;
 	}
 
-	protected override ITypeProvider VisitVariableType( VariableTypeAst variableTypeAst ) =>
-		variableTypeAst.TypeProvider;
-	
+	protected override ITypeProvider VisitVariableType( VariableTypeAst variableTypeAst )
+	{
+		return variableTypeAst.TypeProvider;
+	}
+
 	protected override ITypeProvider VisitLiteral( LiteralAst literalAst )
 	{
 		var typeProvider = literalAst.TypeProvider;
@@ -327,14 +330,23 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		return typeProvider;
 	}
 
-	protected override ITypeProvider VisitNoOperation( NoOperationAst noOperationAst ) =>
-		TypeProviders.Builtin.Nothing;
+	protected override ITypeProvider VisitNoOperation( NoOperationAst noOperationAst )
+	{
+		return TypeProviders.Builtin.Nothing;
+	}
 
-	protected override ITypeProvider VisitComment( CommentAst commentAst ) =>
-		TypeProviders.Builtin.Nothing;
+	protected override ITypeProvider VisitComment( CommentAst commentAst )
+	{
+		return TypeProviders.Builtin.Nothing;
+	}
 
-	protected override ITypeProvider VisitWhitespace( WhitespaceAst whitespaceAst ) =>
-		TypeProviders.Builtin.Nothing;
-	
-	public static bool Analyze( Ast ast ) => new SemanticAnalyzer().AnalyzeTree( ast );
+	protected override ITypeProvider VisitWhitespace( WhitespaceAst whitespaceAst )
+	{
+		return TypeProviders.Builtin.Nothing;
+	}
+
+	public static bool Analyze( Ast ast )
+	{
+		return new SemanticAnalyzer().AnalyzeTree( ast );
+	}
 }

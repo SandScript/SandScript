@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript;
@@ -37,9 +35,12 @@ public class MethodSignature : IEquatable<MethodSignature>
 		return typeSignature!;
 	}
 
-	public override string ToString() => _name + '(' + StringifyTypes() + ')';
+	public override string ToString()
+	{
+		return _name + '(' + StringifyTypes() + ')';
+	}
 
-	public bool Equals( MethodSignature other )
+	public bool Equals( MethodSignature? other )
 	{
 		if ( other is null )
 			return false;
@@ -65,7 +66,7 @@ public class MethodSignature : IEquatable<MethodSignature>
 		return true;
 	}
 
-	public override bool Equals( object obj )
+	public override bool Equals( object? obj )
 	{
 		if ( ReferenceEquals( null, obj ) )
 			return false;
@@ -76,7 +77,10 @@ public class MethodSignature : IEquatable<MethodSignature>
 		return obj.GetType() == GetType() && Equals( (MethodSignature)obj );
 	}
 
-	public override int GetHashCode() => HashCode.Combine( _name, _types );
+	public override int GetHashCode()
+	{
+		return HashCode.Combine( _name, _types );
+	}
 
 	public static MethodSignature From( string methodName, ScriptMethod method )
 	{
@@ -87,7 +91,10 @@ public class MethodSignature : IEquatable<MethodSignature>
 		return new MethodSignature( methodName, parameterTypes.ToImmutable() );
 	}
 
-	public static MethodSignature From( ScriptMethod method ) => From( method.Name, method );
+	public static MethodSignature From( ScriptMethod method )
+	{
+		return From( method.Name, method );
+	}
 
 	public static MethodSignature From( MethodDeclarationAst methodDeclaration )
 	{
@@ -98,6 +105,8 @@ public class MethodSignature : IEquatable<MethodSignature>
 		return new MethodSignature( methodDeclaration.MethodName, parameterTypes.ToImmutable() );
 	}
 
-	public static MethodSignature From( MethodCallAst methodCall ) =>
-		new(methodCall.MethodName, methodCall.ArgumentTypes);
+	public static MethodSignature From( MethodCallAst methodCall )
+	{
+		return new MethodSignature( methodCall.MethodName, methodCall.ArgumentTypes );
+	}
 }

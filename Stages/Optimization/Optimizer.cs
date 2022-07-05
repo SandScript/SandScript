@@ -13,10 +13,10 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 
 	private readonly VariableManager<MethodSignature, bool> _removedMethods =
 		new(new IgnoreHashCodeComparer<MethodSignature>());
-	
-	private readonly OptimizerDiagnostics _diagnostics = new();
 
 	private int _numChanges;
+	
+	private readonly OptimizerDiagnostics _diagnostics = new();
 
 	private Optimizer()
 	{
@@ -28,20 +28,21 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 			throw new ArgumentException( null, nameof(arguments) );
 
 		var sw = Stopwatch.StartNew();
-		
 		_numChanges = 0;
 		var optimizedAst = OptimizeTree( ast );
-		
 		sw.Stop();
-		_diagnostics.Time( sw.Elapsed.TotalMilliseconds );
 		
+		_diagnostics.Time( sw.Elapsed.TotalMilliseconds );
 		if ( _diagnostics.Errors.Count != 0 )
 			return StageResult.Fail( optimizedAst );
 
 		return _numChanges > 0 ? StageResult.NeedsRepeating( optimizedAst ) : StageResult.Success( optimizedAst );
 	}
 
-	private Ast OptimizeTree( Ast ast ) => Visit( ast );
+	private Ast OptimizeTree( Ast ast )
+	{
+		return Visit( ast );
+	}
 
 	private Ast AddChange( Ast ast )
 	{
@@ -79,11 +80,16 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 			: new BlockAst( blockAst.StartLocation, newStatements.ToImmutable() );
 	}
 
-	protected override Ast VisitReturn( ReturnAst returnAst ) =>
-		new ReturnAst( returnAst.StartLocation, Visit( returnAst.ExpressionAst ) );
+	protected override Ast VisitReturn( ReturnAst returnAst )
+	{
+		return new ReturnAst( returnAst.StartLocation, Visit( returnAst.ExpressionAst ) );
+	}
 
-	protected override Ast VisitAssignment( AssignmentAst assignmentAst ) =>
-		new AssignmentAst( assignmentAst.VariableAst, assignmentAst.Operator, Visit( assignmentAst.ExpressionAst ) );
+	protected override Ast VisitAssignment( AssignmentAst assignmentAst )
+	{
+		var newExpression = Visit( assignmentAst.ExpressionAst );
+		return new AssignmentAst( assignmentAst.VariableAst, assignmentAst.Operator, newExpression );
+	}
 
 	protected override Ast VisitBinaryOperator( BinaryOperatorAst binaryOperatorAst )
 	{
@@ -102,7 +108,6 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 	protected override Ast VisitUnaryOperator( UnaryOperatorAst unaryOperatorAst )
 	{
 		var newOperand = Visit( unaryOperatorAst.OperandAst );
-
 		if ( newOperand is not LiteralAst literalAst )
 			return new UnaryOperatorAst( unaryOperatorAst.Operator, newOperand );
 
@@ -210,18 +215,38 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 			Visit( variableDeclarationAst.DefaultExpressionAst ) );
 
 	// If variable is unused or undefined due to previous optimization. Remove it.
-	protected override Ast VisitVariable( VariableAst variableAst ) => variableAst;
+	protected override Ast VisitVariable( VariableAst variableAst )
+	{
+		return variableAst;
+	}
 
-	protected override Ast VisitVariableType( VariableTypeAst variableTypeAst ) => variableTypeAst;
+	protected override Ast VisitVariableType( VariableTypeAst variableTypeAst )
+	{
+		return variableTypeAst;
+	}
 
-	protected override Ast VisitLiteral( LiteralAst literalAst ) => literalAst;
+	protected override Ast VisitLiteral( LiteralAst literalAst )
+	{
+		return literalAst;
+	}
 
-	protected override Ast VisitNoOperation( NoOperationAst noOperationAst ) => noOperationAst;
+	protected override Ast VisitNoOperation( NoOperationAst noOperationAst )
+	{
+		return noOperationAst;
+	}
 
-	protected override Ast VisitComment( CommentAst commentAst ) => new NoOperationAst( commentAst.StartLocation );
+	protected override Ast VisitComment( CommentAst commentAst )
+	{
+		return new NoOperationAst( commentAst.StartLocation );
+	}
 
-	protected override Ast VisitWhitespace( WhitespaceAst whitespaceAst ) =>
-		new NoOperationAst( whitespaceAst.StartLocation );
+	protected override Ast VisitWhitespace( WhitespaceAst whitespaceAst )
+	{
+		return new NoOperationAst( whitespaceAst.StartLocation );
+	}
 
-	public static Ast Optimize( Ast ast ) => new Optimizer().OptimizeTree( ast );
+	public static Ast Optimize( Ast ast )
+	{
+		return new Optimizer().OptimizeTree( ast );
+	}
 }

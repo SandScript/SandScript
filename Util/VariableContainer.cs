@@ -47,22 +47,42 @@ public class VariableContainer<TKey, TValue> : IDictionary<TKey, TValue> where T
 		_children.Add( guid, container );
 		return container;
 	}
-
-	public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => _variables.GetEnumerator();
-
+	
 	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-	
-	public void Add( TKey key, TValue value ) => _variables.Add( key, value );
+	public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+	{
+		return _variables.GetEnumerator();
+	}
 
-	public void Add( KeyValuePair<TKey, TValue> item ) => Add( item.Key, item.Value );
+	public void Add( TKey key, TValue value )
+	{
+		_variables.Add( key, value );
+	}
 
-	public bool Remove( TKey key ) => _variables.Remove( key );
-	
-	public bool Remove( KeyValuePair<TKey, TValue> item ) => _variables.Remove( item.Key );
-	
-	public void Clear() => _variables.Clear();
+	public void Add( KeyValuePair<TKey, TValue> item )
+	{
+		Add( item.Key, item.Value );
+	}
 
-	public void CopyTo( KeyValuePair<TKey, TValue>[] array, int arrayIndex ) => throw new NotImplementedException();
+	public bool Remove( TKey key )
+	{
+		return _variables.Remove( key );
+	}
+
+	public bool Remove( KeyValuePair<TKey, TValue> item )
+	{
+		return _variables.Remove( item.Key );
+	}
+
+	public void Clear()
+	{
+		_variables.Clear();
+	}
+
+	public void CopyTo( KeyValuePair<TKey, TValue>[] array, int arrayIndex )
+	{
+		throw new NotImplementedException();
+	}
 
 	public bool Contains( KeyValuePair<TKey, TValue> item )
 	{
@@ -73,9 +93,7 @@ public class VariableContainer<TKey, TValue> : IDictionary<TKey, TValue> where T
 	}
 
 	public bool ContainsKey( TKey key ) => ContainsKey( key, true, out _ );
-
 	public bool ContainsKey( TKey key, bool recursive ) => ContainsKey( key, recursive, out _ );
-
 	public bool ContainsKey( TKey key, bool recursive, [NotNullWhen( true )] out VariableContainer<TKey, TValue>? container )
 	{
 		if ( _variables.ContainsKey( key ) )
@@ -101,7 +119,6 @@ public class VariableContainer<TKey, TValue> : IDictionary<TKey, TValue> where T
 
 	public bool TryGetValue( TKey key, [MaybeNullWhen( false )] out TValue value ) =>
 		TryGetValue( key, out value, out _ );
-
 	public bool TryGetValue( TKey key, [MaybeNullWhen( false )] out TValue value,
 		[MaybeNullWhen( false )] out VariableContainer<TKey, TValue> container )
 	{

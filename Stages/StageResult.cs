@@ -11,10 +11,18 @@ public sealed class StageResult
 		Results = results;
 	}
 
-	public static StageResult Success( params object?[] results ) => new(StageResultType.Success, results);
+	public static StageResult Success( params object?[] results )
+	{
+		return new StageResult(StageResultType.Success, results);
+	}
 
-	public static StageResult NeedsRepeating( params object?[] results ) =>
-		new(StageResultType.NeedsRepeating, results);
-	
-	public static StageResult Fail( params object?[] results ) => new(StageResultType.Failed, results);
+	public static StageResult NeedsRepeating( params object?[] results )
+	{
+		return new StageResult(StageResultType.NeedsRepeating, results);
+	}
+
+	public static StageResult Fail( params object?[] results )
+	{
+		return new StageResult(StageResultType.Failed, results);
+	}
 }

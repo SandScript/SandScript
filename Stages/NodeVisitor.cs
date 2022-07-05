@@ -43,9 +43,14 @@ public abstract class NodeVisitor<T>
 
 		return result;
 	}
-	
-	protected virtual void PreVisit( Ast node ) { }
-	protected virtual void PostVisit( Ast node, T result ) { }
+
+	protected virtual void PreVisit( Ast node )
+	{
+	}
+
+	protected virtual void PostVisit( Ast node, T result )
+	{
+	}
 
 	protected abstract T VisitProgram( ProgramAst programAst );
 	protected abstract T VisitBlock( BlockAst blockAst );

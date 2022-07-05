@@ -7,7 +7,7 @@ namespace SandScript;
 
 public sealed class Interpreter : NodeVisitor<object?>, IStage
 {
-	StageDiagnostics IStage.Diagnostics => Diagnostics;
+	StageDiagnostics IStage.Diagnostics => _diagnostics;
 	Type IStage.PrerequisiteStage => typeof(Optimizer);
 	Type? IStage.SortBeforeStage => null;
 	
@@ -17,8 +17,9 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	internal readonly VariableManager<MethodSignature, object?> MethodVariables =
 		new(new IgnoreHashCodeComparer<MethodSignature>());
 	
-	internal readonly InterpreterDiagnostics Diagnostics = new();
 	internal bool Returning;
+	
+	private readonly InterpreterDiagnostics _diagnostics = new();
 
 	private Interpreter()
 	{
@@ -45,12 +46,10 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		try
 		{
 			var sw = Stopwatch.StartNew();
-
 			var result = Interpret( ast );
-			
 			sw.Stop();
-			Diagnostics.Time( sw.Elapsed.TotalMilliseconds );
 			
+			_diagnostics.Time( sw.Elapsed.TotalMilliseconds );
 			return StageResult.Success( result );
 		}
 		catch ( Exception e )
@@ -59,7 +58,10 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		}
 	}
 
-	private object? Interpret( Ast ast ) => Visit( ast );
+	private object? Interpret( Ast ast )
+	{
+		return Visit( ast );
+	}
 
 	protected override object? VisitProgram( ProgramAst programAst )
 	{
@@ -107,7 +109,9 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 
 		object? newValue;
 		if ( assignmentAst.Operator.Type == TokenType.Equals )
+		{
 			newValue = Visit( assignmentAst.ExpressionAst );
+		}
 		else
 		{
 			var binaryOperator = assignmentAst.Operator.Type.GetBinaryOperatorOfAssignment();
@@ -139,8 +143,13 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		return operation( operand );
 	}
 
-	protected override object? VisitIf( IfAst ifAst ) =>
-		Visit( (bool)Visit( ifAst.BooleanExpressionAst )! ? ifAst.TrueBodyAst : ifAst.FalseBodyAst );
+	protected override object? VisitIf( IfAst ifAst )
+	{
+		if ( (bool)Visit( ifAst.BooleanExpressionAst )! )
+			return Visit( ifAst.TrueBodyAst );
+
+		return Visit( ifAst.FalseBodyAst );
+	}
 
 	protected override object? VisitFor( ForAst forAst )
 	{
@@ -232,9 +241,15 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		throw new NotImplementedException();
 	}
 
-	protected override object VisitLiteral( LiteralAst literalAst ) => literalAst.Value;
+	protected override object VisitLiteral( LiteralAst literalAst )
+	{
+		return literalAst.Value;
+	}
 
-	protected override object? VisitNoOperation( NoOperationAst noOperationAst ) => null;
+	protected override object? VisitNoOperation( NoOperationAst noOperationAst )
+	{
+		return null;
+	}
 	
 	protected override object VisitComment( CommentAst commentAst )
 	{

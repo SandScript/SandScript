@@ -7,9 +7,15 @@ internal class TypeCheckStack
 {
 	private readonly Stack<ITypeProvider> _typeStack = new();
 
-	public void Push( ITypeProvider type ) => _typeStack.Push( type );
+	public void Push( ITypeProvider type )
+	{
+		_typeStack.Push( type );
+	}
 
-	public void Pop() => _typeStack.Pop();
+	public void Pop()
+	{
+		_typeStack.Pop();
+	}
 	
 	public bool AssertTypeCheckLoose( ITypeProvider type, [NotNullWhen(false)] out ITypeProvider? expectedType )
 	{

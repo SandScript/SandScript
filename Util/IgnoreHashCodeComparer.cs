@@ -12,5 +12,8 @@ public class IgnoreHashCodeComparer<T> : IEqualityComparer<T>
 		return x.Equals( y );
 	}
 
-	public int GetHashCode( T obj ) => 0;
+	public int GetHashCode( T obj )
+	{
+		return 0;
+	}
 }

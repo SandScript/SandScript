@@ -11,12 +11,12 @@ public sealed class Parser : IStage
 	Type IStage.PrerequisiteStage => typeof(Lexer);
 	Type? IStage.SortBeforeStage => null;
 
-	private readonly ParserDiagnostics _diagnostics = new();
-	
 	private ImmutableArray<Token> _tokens;
 	private int _tokenPosition;
 
 	private Token CurrentToken => PeekToken( 0 );
+	
+	private readonly ParserDiagnostics _diagnostics = new();
 
 	private Parser()
 	{
@@ -40,14 +40,12 @@ public sealed class Parser : IStage
 			throw new ArgumentException( null, nameof(arguments) );
 
 		var sw = Stopwatch.StartNew();
-		
 		_tokens = tokens;
 		_tokenPosition = 0;
 		var ast = Parse();
-		
 		sw.Stop();
-		_diagnostics.Time( sw.Elapsed.TotalMilliseconds );
 		
+		_diagnostics.Time( sw.Elapsed.TotalMilliseconds );
 		return _diagnostics.Errors.Count == 0 ? StageResult.Success( ast ) : StageResult.Fail( ast );
 	}
 
@@ -94,11 +92,7 @@ public sealed class Parser : IStage
 	{
 		var startLocation = CurrentToken.Location;
 		if ( CurrentToken.Type != TokenType.LeftCurlyBracket )
-		{
-			var firstStatement = ImmutableArray.CreateBuilder<Ast>();
-			firstStatement.Add( Statement() );
-			return new BlockAst( startLocation, firstStatement.ToImmutable() );
-		}
+			return new BlockAst( startLocation, ImmutableArray.Create( Statement() ) );
 		
 		EatToken( TokenType.LeftCurlyBracket );
 		var statements = ImmutableArray<Ast>.Empty;
@@ -169,7 +163,9 @@ public sealed class Parser : IStage
 		EatToken( TokenType.RightParenthesis );
 		
 		var trueBlock = BlockStatement();
-		EatToken( TokenType.SemiColon );
+		if ( CurrentToken.Type == TokenType.SemiColon )
+			EatToken( TokenType.SemiColon );
+		
 		var falseBlock = Empty();
 		if ( CurrentToken.Type != TokenType.Else )
 			return new IfAst( startLocation, expression, trueBlock, falseBlock );
@@ -336,7 +332,9 @@ public sealed class Parser : IStage
 			left = new UnaryOperatorAst(op, operand);
 		}
 		else
+		{
 			left = PrimaryExpression();
+		}
 
 		while ( true )
 		{
@@ -403,7 +401,10 @@ public sealed class Parser : IStage
 		return ast;
 	}
 
-	private Ast Empty() => new NoOperationAst( CurrentToken.Location );
+	private Ast Empty()
+	{
+		return new NoOperationAst( CurrentToken.Location );
+	}
 
 	private Ast SkipToken()
 	{
@@ -413,6 +414,8 @@ public sealed class Parser : IStage
 		return noop;
 	}
 
-	public static ProgramAst Parse( string text, bool lexNonEssentialTokens ) =>
-		new Parser( new Lexer( text, lexNonEssentialTokens ) ).Parse();
+	public static ProgramAst Parse( string text, bool lexNonEssentialTokens )
+	{
+		return new Parser( new Lexer( text, lexNonEssentialTokens ) ).Parse();
+	}
 }

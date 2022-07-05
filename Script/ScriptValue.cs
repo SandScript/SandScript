@@ -37,7 +37,10 @@ public sealed class ScriptValue
 		_value = value;
 	}
 
-	public bool Equals( ScriptValue other ) => Type == other.Type && TypeProvider.Compare( Value, other.Value );
+	public bool Equals( ScriptValue other )
+	{
+		return Type == other.Type && TypeProvider.Compare( Value, other.Value );
+	}
 
 	public override bool Equals( object? obj )
 	{
@@ -50,9 +53,15 @@ public sealed class ScriptValue
 		return obj.GetType() == GetType() && Equals( (ScriptValue)obj );
 	}
 
-	public override int GetHashCode() => HashCode.Combine( Type, Value );
+	public override int GetHashCode()
+	{
+		return HashCode.Combine( Type, Value );
+	}
 
-	public override string ToString() => nameof(ScriptValue) + "( Type: " + Type + ", Value: " + Value + " )";
+	public override string ToString()
+	{
+		return nameof(ScriptValue) + "( Type: " + Type + ", Value: " + Value + " )";
+	}
 
 	public static ScriptValue From<T>( T value )
 	{
@@ -63,9 +72,9 @@ public sealed class ScriptValue
 			return new ScriptValue( value );
 		
 		var provider = TypeProviders.GetByType( value.GetType() );
-		if ( provider is null )
-			throw new UnsupportedException();
-
-		return new ScriptValue( value );
+		if ( provider is not null )
+			return new ScriptValue( value );
+		
+		throw new UnsupportedException();
 	}
 }

@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 namespace SandScript;
 
@@ -74,9 +74,25 @@ public static class TokenTypeExtension
 		return false;
 	}
 
-	public static string GetString( this TokenType tokenType ) => IsKeyword( tokenType )
-		? Keywords.FirstOrDefault( x => x.Value == tokenType ).Key
-		: GeneralTokens.FirstOrDefault( x => x.Value == tokenType ).Key;
+	public static string GetString( this TokenType tokenType )
+	{
+		if ( IsKeyword( tokenType ) )
+		{
+			foreach ( var keyword in Keywords )
+			{
+				if ( keyword.Value == tokenType )
+					return keyword.Key;
+			}
+		}
+
+		foreach ( var general in GeneralTokens )
+		{
+			if ( general.Value == tokenType )
+				return general.Key;
+		}
+
+		throw new Exception();
+	}
 
 	public static int GetUnaryOperatorPrecedence( this TokenType tokenType )
 	{

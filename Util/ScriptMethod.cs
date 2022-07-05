@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using SandScript.AbstractSyntaxTrees;
 
@@ -15,12 +14,25 @@ public class ScriptMethod : IEquatable<ScriptMethod>
 	
 	private readonly bool _isCsMethod;
 	
-	[MemberNotNullWhen(true, nameof(_isCsMethod))]
 	private MethodInfo? MethodInfo { get; }
-	[MemberNotNullWhen(true, nameof(_isCsMethod))]
 	private ParameterInfo[]? MethodParameters { get; }
-	[MemberNotNullWhen(false, nameof(_isCsMethod))]
 	private MethodDeclarationAst? MethodDeclarationAst { get; }
+	
+	public ScriptMethod( MethodDeclarationAst methodDeclarationAst )
+	{
+		Name = methodDeclarationAst.MethodName;
+		ReturnTypeProvider = methodDeclarationAst.ReturnTypeAst.TypeProvider;
+
+		_isCsMethod = false;
+		MethodDeclarationAst = methodDeclarationAst;
+
+		var parameters = new List<(string, ITypeProvider)>();
+		foreach ( var parameter in methodDeclarationAst.ParameterAsts )
+			parameters.Add( (parameter.ParameterNameAst.VariableName, parameter.ParameterTypeAst.TypeProvider) );
+		Parameters = parameters;
+		
+		Signature = MethodSignature.From( this );
+	}
 
 	internal ScriptMethod( MethodInfo methodInfo, ScriptMethodAttribute attribute )
 	{
@@ -38,22 +50,6 @@ public class ScriptMethod : IEquatable<ScriptMethod>
 			var parameter = methodParameters[i];
 			parameters.Add( (parameter.Name!, TypeProviders.GetByType( parameter.ParameterType )!) );
 		}
-		Parameters = parameters;
-		
-		Signature = MethodSignature.From( this );
-	}
-
-	internal ScriptMethod( MethodDeclarationAst methodDeclarationAst )
-	{
-		Name = methodDeclarationAst.MethodName;
-		ReturnTypeProvider = methodDeclarationAst.ReturnTypeAst.TypeProvider;
-
-		_isCsMethod = false;
-		MethodDeclarationAst = methodDeclarationAst;
-
-		var parameters = new List<(string, ITypeProvider)>();
-		foreach ( var parameter in methodDeclarationAst.ParameterAsts )
-			parameters.Add( (parameter.ParameterNameAst.VariableName, parameter.ParameterTypeAst.TypeProvider) );
 		Parameters = parameters;
 		
 		Signature = MethodSignature.From( this );

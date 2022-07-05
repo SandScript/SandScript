@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace SandScript;
 
@@ -23,7 +22,13 @@ public sealed class ScriptVariable
 		CanWrite = attribute.CanWrite;
 	}
 
-	public object? GetValue() => Property.GetGetMethod()!.Invoke( null, null );
+	public object? GetValue()
+	{
+		return Property.GetGetMethod()!.Invoke( null, null );
+	}
 
-	public void SetValue( object? value ) => Property.GetSetMethod()!.Invoke( null, new[] {value} );
+	public void SetValue( object? value )
+	{
+		Property.GetSetMethod()!.Invoke( null, new[] {value} );
+	}
 }
