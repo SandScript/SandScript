@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Immutable;
-using System.Diagnostics;
+﻿using System.Collections.Immutable;
 using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript;
@@ -224,8 +222,12 @@ public sealed class Optimizer : NodeVisitor<Ast>
 		return new NoOperationAst( whitespaceAst.StartLocation );
 	}
 
-	public static Ast Optimize( Ast ast )
+	public static Ast Optimize( Ast ast ) => Optimize( ast, out _ );
+	public static Ast Optimize( Ast ast, out StageDiagnostics diagnostics )
 	{
-		return new Optimizer().OptimizeTree( ast );
+		var optimizer = new Optimizer();
+		var optimizedAst = optimizer.OptimizeTree( ast );
+		diagnostics = optimizer._diagnostics;
+		return optimizedAst;
 	}
 }
