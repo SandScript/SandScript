@@ -1,27 +1,21 @@
 ﻿using System;
-using System.Diagnostics;
 using SandScript.AbstractSyntaxTrees;
-using SandScript.Exceptions;
 
 namespace SandScript;
 
-public sealed class Interpreter : NodeVisitor<object?>, IStage
+public sealed class Interpreter : NodeVisitor<object?>
 {
-	StageDiagnostics IStage.Diagnostics => _diagnostics;
-	Type IStage.PrerequisiteStage => typeof(Optimizer);
-	Type? IStage.SortBeforeStage => null;
-	
-	internal Script Owner { get; private set; }
+	internal readonly Script Owner;
 
 	internal readonly VariableManager<string, object?> Variables = new(null);
 	internal readonly VariableManager<MethodSignature, object?> MethodVariables =
 		new(new IgnoreHashCodeComparer<MethodSignature>());
 	
-	internal bool Returning;
+	internal readonly InterpreterDiagnostics Diagnostics = new();
 	
-	private readonly InterpreterDiagnostics _diagnostics = new();
+	internal bool Returning;
 
-	private Interpreter()
+	internal Interpreter()
 	{
 		Owner = null!;
 		
@@ -35,30 +29,8 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		foreach ( var variable in SandScript.CustomVariables )
 			Variables.Root.Add( variable.Name, variable );
 	}
-	
-	StageResult IStage.Run( Script owner, object?[] arguments )
-	{
-		if ( arguments.Length < 1 || arguments[0] is not Ast ast )
-			throw new ArgumentException( null, nameof(arguments) );
 
-		Owner = owner;
-
-		try
-		{
-			var sw = Stopwatch.StartNew();
-			var result = Interpret( ast );
-			sw.Stop();
-			
-			_diagnostics.Time( sw.Elapsed.TotalMilliseconds );
-			return StageResult.Success( result );
-		}
-		catch ( Exception e )
-		{
-			return StageResult.Fail( new RuntimeException( e ) );
-		}
-	}
-
-	private object? Interpret( Ast ast )
+	public object? Interpret( Ast ast )
 	{
 		return Visit( ast );
 	}

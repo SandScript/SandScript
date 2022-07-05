@@ -1,27 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript;
 
-public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
+public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>
 {
-	StageDiagnostics IStage.Diagnostics => _diagnostics;
-	Type IStage.PrerequisiteStage => typeof(Parser);
-	Type? IStage.SortBeforeStage => null;
-
 	internal readonly VariableManager<string, ITypeProvider> VariableTypes = new(null);
 	internal readonly VariableManager<MethodSignature, ScriptMethod> VariableMethods =
 		new(new IgnoreHashCodeComparer<MethodSignature>());
 	private readonly VariableManager<string, ScriptVariable> _variableExternals = new(null);
 	
-	private readonly TypeCheckStack _neededTypes = new();
+	internal readonly SemanticAnalyzerDiagnostics Diagnostics = new();
 	
-	private readonly SemanticAnalyzerDiagnostics _diagnostics = new();
+	private readonly TypeCheckStack _neededTypes = new();
 
-	private SemanticAnalyzer()
+	internal SemanticAnalyzer()
 	{
 		foreach ( var method in SandScript.CustomMethods )
 		{
@@ -36,25 +29,12 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 			_variableExternals.Root.AddOrUpdate( variable.Name, variable );
 		}
 	}
-	
-	StageResult IStage.Run( Script owner, object?[] arguments )
-	{
-		if ( arguments.Length < 1 || arguments[0] is not Ast ast )
-			throw new ArgumentException( null, nameof(arguments) );
 
-		var sw = Stopwatch.StartNew();
-		var result = AnalyzeTree( ast );
-		sw.Stop();
-		
-		_diagnostics.Time( sw.Elapsed.TotalMilliseconds );
-		return result ? StageResult.Success( ast ) : StageResult.Fail( ast );
-	}
-
-	private bool AnalyzeTree( Ast ast )
+	public bool AnalyzeAst( Ast ast )
 	{
 		Visit( ast );
 		
-		return _diagnostics.Errors.Count == 0;
+		return Diagnostics.Errors.Count == 0;
 	}
 
 	private ITypeProvider VisitExpectingType( ITypeProvider type, Ast ast )
@@ -95,7 +75,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	{
 		var result = Visit( returnAst.ExpressionAst );
 		if ( !VerifyTypeLoose( result, out var expectedType ) )
-			_diagnostics.TypeMismatch( expectedType, result, returnAst.StartLocation );
+			Diagnostics.TypeMismatch( expectedType, result, returnAst.StartLocation );
 		
 		return result;
 	}
@@ -105,13 +85,13 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		var variableName = assignmentAst.VariableName;
 		if ( !VariableTypes.Current.TryGetValue( variableName, out var type ) )
 		{
-			_diagnostics.Undefined( variableName );
+			Diagnostics.Undefined( variableName );
 			return TypeProviders.Builtin.Nothing;
 		}
 
 		if ( _variableExternals.Current.TryGetValue( variableName, out var variable ) && !variable.CanWrite )
 		{
-			_diagnostics.Unwritable( variableName );
+			Diagnostics.Unwritable( variableName );
 			return TypeProviders.Builtin.Nothing;
 		}
 
@@ -132,12 +112,12 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		var operandResultType = operatorType.GetOperatorResultType( leftType );
 		
 		if ( !VerifyTypeLoose( operandResultType, out var expectedType ) )
-			_diagnostics.TypeMismatch( expectedType, leftType, binaryOperatorAst.StartLocation );
+			Diagnostics.TypeMismatch( expectedType, leftType, binaryOperatorAst.StartLocation );
 
 		if ( leftType.BinaryOperations.ContainsKey( operatorType ) )
 			return leftType;
 
-		_diagnostics.UnsupportedBinaryOperatorForType( operatorType, leftType, binaryOperatorAst.StartLocation );
+		Diagnostics.UnsupportedBinaryOperatorForType( operatorType, leftType, binaryOperatorAst.StartLocation );
 		return leftType;
 	}
 
@@ -149,12 +129,12 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		var operandResultType = operatorType.GetOperatorResultType( operandType );
 		
 		if ( !VerifyTypeLoose( operandResultType, out var expectedType ) )
-			_diagnostics.TypeMismatch( expectedType, operandType, unaryOperatorAst.StartLocation );
+			Diagnostics.TypeMismatch( expectedType, operandType, unaryOperatorAst.StartLocation );
 
 		if ( operandType.UnaryOperations.ContainsKey( operatorType ) )
 			return operandType;
 		
-		_diagnostics.UnsupportedUnaryOperatorForType( operatorType, operandType, unaryOperatorAst.StartLocation );
+		Diagnostics.UnsupportedUnaryOperatorForType( operatorType, operandType, unaryOperatorAst.StartLocation );
 		return operandType;
 	}
 	
@@ -164,14 +144,14 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		
 		var result = Visit( ifAst.TrueBodyAst );
 		if ( !VerifyTypeLoose( result, out var expectedType ) )
-			_diagnostics.TypeMismatch( expectedType, result, ifAst.TrueBodyAst.StartLocation );
+			Diagnostics.TypeMismatch( expectedType, result, ifAst.TrueBodyAst.StartLocation );
 
 		if ( ifAst.FalseBodyAst is NoOperationAst )
 			return result;
 		
 		result = Visit( ifAst.FalseBodyAst );
 		if ( !VerifyTypeLoose( result, out expectedType ) )
-			_diagnostics.TypeMismatch( expectedType, result, ifAst.FalseBodyAst.StartLocation );
+			Diagnostics.TypeMismatch( expectedType, result, ifAst.FalseBodyAst.StartLocation );
 
 		return result;
 	}
@@ -208,7 +188,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		var methodSignature = MethodSignature.From( method );
 		if ( VariableMethods.Current.TryGetValue( methodSignature, out _, out var container ) )
 		{
-			_diagnostics.Redefined( methodSignature.ToString(), container.Guid );
+			Diagnostics.Redefined( methodSignature.ToString(), container.Guid );
 			return TypeProviders.Builtin.Nothing;
 		}
 		
@@ -237,23 +217,23 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		var callSignature = MethodSignature.From( methodCallAst );
 		if ( !VariableMethods.Current.TryGetValue( callSignature, out var method ) )
 		{
-			_diagnostics.Undefined( callSignature.ToString() );
+			Diagnostics.Undefined( callSignature.ToString() );
 			return TypeProviders.Builtin.Nothing;
 		}
 		
 		if ( !VerifyTypeLoose( method.ReturnTypeProvider, out var expectedType ) )
-			_diagnostics.TypeMismatch( expectedType, method.ReturnTypeProvider, methodCallAst.StartLocation );
+			Diagnostics.TypeMismatch( expectedType, method.ReturnTypeProvider, methodCallAst.StartLocation );
 
 		var numArguments = methodCallAst.ArgumentAsts.Length;
 		if ( numArguments != method.Parameters.Count )
-			_diagnostics.ArgumentCountMismatch( method.Parameters.Count, numArguments, methodCallAst.StartLocation );
+			Diagnostics.ArgumentCountMismatch( method.Parameters.Count, numArguments, methodCallAst.StartLocation );
 
 		for ( var i = 0; i < numArguments; i++ )
 		{
 			var parameter = method.Parameters[i];
 			if ( i >= method.Parameters.Count )
 			{
-				_diagnostics.MissingParameter( parameter.Item1, methodCallAst.MethodName, methodCallAst.StartLocation );
+				Diagnostics.MissingParameter( parameter.Item1, methodCallAst.MethodName, methodCallAst.StartLocation );
 				continue;
 			}
 			
@@ -277,7 +257,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 			value = variableDeclarationAst.VariableType;
 		
 		if ( value == TypeProviders.Builtin.Nothing || value == TypeProviders.Builtin.Variable )
-			_diagnostics.MissingType( variableDeclarationAst.StartLocation );
+			Diagnostics.MissingType( variableDeclarationAst.StartLocation );
 		
 		foreach ( var variable in variableDeclarationAst.VariableNameAsts )
 		{
@@ -285,7 +265,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 			
 			if ( VariableTypes.Current.TryGetValue( variableName, out _, out var container ) )
 			{
-				_diagnostics.Redefined( variableName, container.Guid );
+				Diagnostics.Redefined( variableName, container.Guid );
 				continue;
 			}
 
@@ -300,18 +280,18 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		var variableName = variableAst.VariableName;
 		if ( !VariableTypes.Current.TryGetValue( variableName, out var variableType ) )
 		{
-			_diagnostics.Undefined( variableName );
+			Diagnostics.Undefined( variableName );
 			return TypeProviders.Builtin.Nothing;
 		}
 
 		if ( _variableExternals.Current.TryGetValue( variableName, out var variable ) && !variable.CanRead )
 		{
-			_diagnostics.Unreadable( variableName );
+			Diagnostics.Unreadable( variableName );
 			return variable.TypeProvider;
 		}
 		
 		if ( !VerifyTypeLoose( variableType, out var expectedType ) )
-			_diagnostics.TypeMismatch( expectedType, variableType, variableAst.StartLocation );
+			Diagnostics.TypeMismatch( expectedType, variableType, variableAst.StartLocation );
 		
 		return variableType;
 	}
@@ -325,7 +305,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 	{
 		var typeProvider = literalAst.TypeProvider;
 		if ( !VerifyTypeLoose( typeProvider, out var expectedType ) )
-			_diagnostics.TypeMismatch( expectedType, typeProvider, literalAst.StartLocation );
+			Diagnostics.TypeMismatch( expectedType, typeProvider, literalAst.StartLocation );
 		
 		return typeProvider;
 	}
@@ -345,8 +325,13 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		return TypeProviders.Builtin.Nothing;
 	}
 
-	public static bool Analyze( Ast ast )
+	public static bool Analyze( Ast ast ) => Analyze( ast, out _ );
+	public static bool Analyze( Ast ast, out StageDiagnostics diagnostics )
 	{
-		return new SemanticAnalyzer().AnalyzeTree( ast );
+		var analyzer = new SemanticAnalyzer();
+		var result = analyzer.AnalyzeAst( ast );
+		diagnostics = analyzer.Diagnostics;
+
+		return result;
 	}
 }

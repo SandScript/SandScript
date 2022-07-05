@@ -1,20 +1,14 @@
-﻿using System;
-using System.Collections.Immutable;
-using System.Diagnostics;
+﻿using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 
 namespace SandScript;
 
-public sealed class Lexer : IStage
+public sealed class Lexer
 {
-	StageDiagnostics IStage.Diagnostics => Diagnostics;
-	Type? IStage.PrerequisiteStage => null;
-	Type? IStage.SortBeforeStage => null;
-
 	public readonly LexerDiagnostics Diagnostics = new();
 
-	public string Text { get; private set; } = string.Empty;
-	private bool _lexNonEssentialTokens;
+	public readonly string Text;
+	private readonly bool _lexNonEssentialTokens;
 
 	internal char CurrentChar;
 	internal bool IsCurrentEof;
@@ -23,47 +17,13 @@ public sealed class Lexer : IStage
 	internal int Row = 1;
 	internal int Column = 1;
 
-	private Lexer()
-    {
-    }
-
-	internal Lexer( string text, bool lexNonEssentialTokens )
-	{
-		Init( text, lexNonEssentialTokens );
-	}
-
-	StageResult IStage.Run( Script owner, object?[] arguments )
-	{
-		if ( arguments.Length < 2 || arguments[0] is not string text || arguments[1] is not bool lexNonEssentialTokens )
-			throw new ArgumentException( null, nameof(arguments) );
-
-		var sw = Stopwatch.StartNew();
-		
-		if ( !Init( text, lexNonEssentialTokens ) )
-			return StageResult.Fail();
-
-		var tokens = ImmutableArray.CreateBuilder<Token>();
-
-		do
-		{
-			tokens.Add( GetNextToken() );
-		} while ( tokens[^1].Type != TokenType.Eof );
-		
-		sw.Stop();
-		
-		Diagnostics.Time( sw.Elapsed.TotalMilliseconds );
-		return Diagnostics.Errors.Count == 0
-			? StageResult.Success( tokens.ToImmutable() )
-			: StageResult.Fail( tokens.ToImmutable() );
-	}
-	
-	private bool Init( string text, bool lexNonEssentialTokens )
+	private Lexer( string text, bool lexNonEssentialTokens )
 	{
 		if ( string.IsNullOrWhiteSpace( text ) )
 		{
 			Diagnostics.NoCode();
 			Text = string.Empty;
-			return false;
+			return;
 		}
 
 		Position = 0;
@@ -74,60 +34,6 @@ public sealed class Lexer : IStage
 		_lexNonEssentialTokens = lexNonEssentialTokens;
 		CurrentChar = text[Position];
 		IsCurrentEof = CurrentChar == '\0';
-
-		return true;
-	}
-	
-	public Token GetNextToken()
-	{
-		while ( !IsCurrentEof )
-		{
-			if ( char.IsWhiteSpace( CurrentChar ) )
-			{
-				var whitespaceToken = GetWhitespaceToken();
-				if ( _lexNonEssentialTokens )
-					return whitespaceToken;
-
-				continue;
-			}
-
-			if ( CurrentChar == '/' )
-			{
-				switch ( Peek() )
-				{
-					case '/':
-						var commentToken = GetCommentToken();
-						if ( _lexNonEssentialTokens )
-							return commentToken;
-
-						continue;
-					case '*':
-						var multiLineCommentToken = GetMultiLineCommentToken();
-						if ( _lexNonEssentialTokens )
-							return multiLineCommentToken;
-
-						continue;
-				}
-			}
-
-			if ( TryGetLiteral( out var token ) )
-				return token;
-
-			if ( CurrentChar == '_' || char.IsLetterOrDigit( CurrentChar ) )
-				return GetIdentifierOrKeyword();
-
-			if ( TryGetMiscToken( 2, out token ) )
-				return token;
-
-			if ( TryGetMiscToken( 1, out token ) )
-				return token;
-
-			var location = new TokenLocation( Row, Column );
-			Diagnostics.UnknownToken( CurrentChar, location );
-			return new Token( TokenType.None, CurrentChar, location );
-		}
-
-		return new Token( TokenType.Eof, string.Empty, Row, Column );
 	}
 
 	public void Advance()
@@ -156,6 +62,58 @@ public sealed class Lexer : IStage
     {
 	    var peekPosition = Position + count;
 	    return peekPosition > Text.Length - 1 ? '\0' : Text[peekPosition];
+    }
+    
+    private Token GetNextToken()
+    {
+	    while ( !IsCurrentEof )
+	    {
+		    if ( char.IsWhiteSpace( CurrentChar ) )
+		    {
+			    var whitespaceToken = GetWhitespaceToken();
+			    if ( _lexNonEssentialTokens )
+				    return whitespaceToken;
+
+			    continue;
+		    }
+
+		    if ( CurrentChar == '/' )
+		    {
+			    switch ( Peek() )
+			    {
+				    case '/':
+					    var commentToken = GetCommentToken();
+					    if ( _lexNonEssentialTokens )
+						    return commentToken;
+
+					    continue;
+				    case '*':
+					    var multiLineCommentToken = GetMultiLineCommentToken();
+					    if ( _lexNonEssentialTokens )
+						    return multiLineCommentToken;
+
+					    continue;
+			    }
+		    }
+
+		    if ( TryGetLiteral( out var token ) )
+			    return token;
+
+		    if ( CurrentChar == '_' || char.IsLetterOrDigit( CurrentChar ) )
+			    return GetIdentifierOrKeyword();
+
+		    if ( TryGetMiscToken( 2, out token ) )
+			    return token;
+
+		    if ( TryGetMiscToken( 1, out token ) )
+			    return token;
+
+		    var location = new TokenLocation( Row, Column );
+		    Diagnostics.UnknownToken( CurrentChar, location );
+		    return new Token( TokenType.None, CurrentChar, location );
+	    }
+
+	    return new Token( TokenType.Eof, string.Empty, Row, Column );
     }
 
     private Token GetWhitespaceToken()
@@ -274,7 +232,10 @@ public sealed class Lexer : IStage
 	    return true;
     }
 
-    public static ImmutableArray<Token> Lex( string text, bool lexNonEssentialTokens = false )
+    public static ImmutableArray<Token> Lex( string text, bool lexNonEssentialTokens = false ) =>
+	    Lex( text, lexNonEssentialTokens, out _ );
+    public static ImmutableArray<Token> Lex( string text, bool lexNonEssentialTokens,
+	    out StageDiagnostics diagnostics )
     {
 	    var lexer = new Lexer( text, lexNonEssentialTokens );
 	    var tokens = ImmutableArray.CreateBuilder<Token>();
@@ -284,6 +245,7 @@ public sealed class Lexer : IStage
 		    tokens.Add( lexer.GetNextToken() );
 	    } while ( tokens[^1].Type != TokenType.Eof );
 
+	    diagnostics = lexer.Diagnostics;
 	    return tokens.ToImmutable();
     }
 }
