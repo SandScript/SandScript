@@ -111,7 +111,7 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 		else
 		{
 			var binaryOperator = assignmentAst.Operator.Type.GetBinaryOperatorOfAssignment();
-			var operation = value.GetTypeProvider()!.BinaryOperations[binaryOperator];
+			var operation = TypeProviders.GetByValue( value )!.BinaryOperations[binaryOperator];
 			newValue = operation( value, Visit( assignmentAst.ExpressionAst ) );
 		}
 
@@ -126,7 +126,7 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	protected override object? VisitBinaryOperator( BinaryOperatorAst binaryOperatorAst )
 	{
 		var left = Visit( binaryOperatorAst.LeftAst );
-		var operation = left.GetTypeProvider()!.BinaryOperations[binaryOperatorAst.Operator.Type];
+		var operation = TypeProviders.GetByValue( left )!.BinaryOperations[binaryOperatorAst.Operator.Type];
 
 		return operation( left, Visit( binaryOperatorAst.RightAst ) );
 	}
@@ -134,7 +134,7 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 	protected override object? VisitUnaryOperator( UnaryOperatorAst unaryOperatorAst )
 	{
 		var operand = Visit( unaryOperatorAst.OperandAst );
-		var operation = operand.GetTypeProvider()!.UnaryOperations[unaryOperatorAst.Operator.Type];
+		var operation = TypeProviders.GetByValue( operand )!.UnaryOperations[unaryOperatorAst.Operator.Type];
 
 		return operation( operand );
 	}
