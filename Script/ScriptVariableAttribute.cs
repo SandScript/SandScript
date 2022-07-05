@@ -2,7 +2,7 @@
 
 namespace SandScript;
 
-[AttributeUsage( AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true )]
+[AttributeUsage( AttributeTargets.Property, AllowMultiple = true )]
 public class ScriptVariableAttribute : Attribute
 {
 	public readonly string VariableName;

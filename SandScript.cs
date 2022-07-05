@@ -66,22 +66,5 @@ public static class SandScript
 				CustomVariableCache.Add( new ScriptVariable( property, attribute ) );
 			}
 		}
-
-		var fields = typeof(T).GetFields( BindingFlags.Public | BindingFlags.Static )
-			.Where( f => f.GetCustomAttributes( typeof(ScriptVariableAttribute), false ).Length > 0 );
-
-		foreach ( var field in fields )
-		{
-			if ( TypeProviders.GetByType( field.FieldType ) is null )
-				throw new TypeUnsupportedException( field.FieldType );
-
-			foreach ( var attribute in field.GetCustomAttributes<ScriptVariableAttribute>() )
-			{
-				if ( attribute.CanWrite && field.IsLiteral || field.IsInitOnly )
-					throw new UnwritableVariableException( field, attribute );
-				
-				CustomVariableCache.Add( new ScriptVariable( field, attribute ) );
-			}
-		}
 	}
 }
