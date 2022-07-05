@@ -58,20 +58,6 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		return _diagnostics.Errors.Count == 0;
 	}
 
-	private void EnterScope( Guid guid, IEnumerable<KeyValuePair<string, ITypeProvider>>? startVariables = null )
-	{
-		VariableTypes.Enter( guid, startVariables );
-		VariableMethods.Enter( guid );
-		_variableExternals.Enter( guid );
-	}
-
-	private void LeaveScope()
-	{
-		VariableTypes.Leave();
-		VariableMethods.Leave();
-		_variableExternals.Leave();
-	}
-
 	private ITypeProvider VisitExpectingType( ITypeProvider type, Ast ast )
 	{
 		_neededTypes.Push( type );
@@ -94,10 +80,12 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 
 	protected override ITypeProvider VisitBlock( BlockAst blockAst )
 	{
-		EnterScope( blockAst.Guid );
+		var guid = blockAst.Guid;
+		using var scope = VariableTypes.Enter( guid );
+		using var scope2 = VariableMethods.Enter( guid );
+		using var scope3 = _variableExternals.Enter( guid );
 		foreach ( var statement in blockAst.Statements )
 			Visit( statement );
-		LeaveScope();
 
 		return TypeProviders.Builtin.Nothing;
 	}
@@ -189,12 +177,14 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 
 	protected override ITypeProvider VisitFor( ForAst forAst )
 	{
-		EnterScope( forAst.Guid );
+		var guid = forAst.Guid;
+		using var scope = VariableTypes.Enter( guid );
+		using var scope2 = VariableMethods.Enter( guid );
+		using var scope3 = _variableExternals.Enter( guid );
 		VisitExpectingType( TypeProviders.Builtin.Number, forAst.VariableDeclarationAst );
 		VisitExpectingType( TypeProviders.Builtin.Boolean, forAst.BooleanExpressionAst );
 		VisitExpectingType( TypeProviders.Builtin.Nothing, forAst.IteratorAst );
 		var result = Visit( forAst.BodyAst );
-		LeaveScope();
 
 		return result;
 	}
@@ -224,11 +214,13 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 		VariableTypes.Current.AddOrUpdate( methodSignature.ToString(), TypeProviders.Builtin.Method );
 		VariableMethods.Current.AddOrUpdate( methodSignature, new ScriptMethod( methodDeclarationAst ) );
 
-		EnterScope( methodDeclarationAst.Guid );
+		var guid = methodDeclarationAst.Guid;
+		using var scope = VariableTypes.Enter( guid );
+		using var scope2 = VariableMethods.Enter( guid );
+		using var scope3 = _variableExternals.Enter( guid );
 		foreach ( var parameter in methodDeclarationAst.ParameterAsts )
 			Visit( parameter );
 		Visit( methodDeclarationAst.BodyAst );
-		LeaveScope();
 			
 		return TypeProviders.Builtin.Nothing;
 	}

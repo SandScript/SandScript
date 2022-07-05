@@ -24,26 +24,44 @@ public class VariableManager<TKey, TValue> where TKey : notnull
 		Current = new VariableContainer<TKey, TValue>( Guid.Empty, null, null, comparer );
 	}
 
-	public void Enter( Guid guid, IEnumerable<KeyValuePair<TKey, TValue>>? startVariables = null )
+	public ChildHandle Enter( Guid guid, IEnumerable<KeyValuePair<TKey, TValue>>? startVariables = null )
 	{
+		var handle = new ChildHandle( this );
 		if ( !Current.Children.ContainsKey( guid ) )
 		{
 			Current = Current.AddChild( guid, startVariables );
-			return;
+			return handle;
 		}
 		
 		Current = Current.Children[guid];
 		Current.Clear();
 		if ( startVariables is null )
-			return;
+			return handle;
 			
 		foreach ( var pair in startVariables )
 			Current.Add( pair );
+
+		return handle;
 	}
 
-	public void Leave()
+	private void Leave()
 	{
 		if ( Current.Parent is not null )
 			Current = Current.Parent!;
+	}
+
+	public readonly struct ChildHandle : IDisposable
+	{
+		private readonly VariableManager<TKey, TValue> _manager;
+
+		public ChildHandle( VariableManager<TKey, TValue> manager )
+		{
+			_manager = manager;
+		}
+		
+		public void Dispose()
+		{
+			_manager.Leave();
+		}
 	}
 }

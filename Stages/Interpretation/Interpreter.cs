@@ -70,7 +70,6 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 				continue;
 
 			Returning = false;
-			Variables.Leave();
 			return result;
 		}
 		
@@ -79,17 +78,18 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 
 	protected override object? VisitBlock( BlockAst blockAst )
 	{
-		Variables.Enter( blockAst.Guid );
+		var guid = blockAst.Guid;
+		using var scope = Variables.Enter( guid );
+		using var scope2 = MethodVariables.Enter( guid );
+		
 		foreach ( var statement in blockAst.Statements )
 		{
 			var result = Visit( statement );
 			if ( !Returning )
 				continue;
 
-			Variables.Leave();
 			return result;
 		}
-		Variables.Leave();
 
 		return null;
 	}
@@ -144,21 +144,17 @@ public sealed class Interpreter : NodeVisitor<object?>, IStage
 
 	protected override object? VisitFor( ForAst forAst )
 	{
-		Variables.Enter( forAst.Guid );
+		using var scope = Variables.Enter( forAst.Guid );
+		using var scope2 = MethodVariables.Enter( forAst.Guid );
 		Visit( forAst.VariableDeclarationAst );
 		while ( (bool)Visit( forAst.BooleanExpressionAst )! )
 		{
 			var result = Visit( forAst.BodyAst );
-			if ( !Returning )
-			{
-				Visit( forAst.IteratorAst );
-				continue;
-			}
-			
-			Variables.Leave();
-			return result;
+			if ( Returning )
+				return result;
+
+			Visit( forAst.IteratorAst );
 		}
-		Variables.Leave();
 		
 		return null;
 	}

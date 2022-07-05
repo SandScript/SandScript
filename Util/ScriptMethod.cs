@@ -85,9 +85,8 @@ public class ScriptMethod : IEquatable<ScriptMethod>
 			for ( var i = 0; i < values.Length; i++ )
 				parameters.Add( Parameters[i].Item1, values[i] );
 			
-			interpreter.Variables.Enter( Guid.Empty, parameters );
+			using var scope = interpreter.Variables.Enter( Guid.Empty, parameters );
 			var result = interpreter.Visit( MethodDeclarationAst!.BodyAst );
-			interpreter.Variables.Leave();
 
 			interpreter.Returning = false;
 			return result;
