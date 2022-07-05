@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using SandScript.AbstractSyntaxTrees;
 
@@ -8,9 +9,9 @@ namespace SandScript;
 public class MethodSignature : IEquatable<MethodSignature>
 {
 	private readonly string _name;
-	private readonly IReadOnlyList<ITypeProvider> _types;
+	private readonly ImmutableArray<ITypeProvider> _types;
 
-	private MethodSignature( string name, IReadOnlyList<ITypeProvider> types )
+	private MethodSignature( string name, ImmutableArray<ITypeProvider> types )
 	{
 		_name = name;
 		_types = types;
@@ -18,7 +19,7 @@ public class MethodSignature : IEquatable<MethodSignature>
 	
 	private string StringifyTypes()
 	{
-		switch ( _types.Count )
+		switch ( _types.Length )
 		{
 			case 0:
 				return string.Empty;
@@ -27,7 +28,7 @@ public class MethodSignature : IEquatable<MethodSignature>
 		}
 
 		var typeSignature = _types[0].ToString();
-		for ( var i = 1; i < _types.Count; i++ )
+		for ( var i = 1; i < _types.Length; i++ )
 		{
 			typeSignature += ',';
 			typeSignature += _types[i];
@@ -38,7 +39,7 @@ public class MethodSignature : IEquatable<MethodSignature>
 
 	public override string ToString() => _name + '(' + StringifyTypes() + ')';
 
-	public bool Equals( MethodSignature? other )
+	public bool Equals( MethodSignature other )
 	{
 		if ( other is null )
 			return false;
@@ -46,10 +47,10 @@ public class MethodSignature : IEquatable<MethodSignature>
 		if ( _name != other._name )
 			return false;
 
-		if ( _types.Count != other._types.Count )
+		if ( _types.Length != other._types.Length )
 			return false;
 
-		for ( var i = 0; i < _types.Count; i++ )
+		for ( var i = 0; i < _types.Length; i++ )
 		{
 			if ( _types[i] == other._types[i] )
 				continue;
@@ -64,7 +65,7 @@ public class MethodSignature : IEquatable<MethodSignature>
 		return true;
 	}
 
-	public override bool Equals( object? obj )
+	public override bool Equals( object obj )
 	{
 		if ( ReferenceEquals( null, obj ) )
 			return false;
@@ -77,13 +78,25 @@ public class MethodSignature : IEquatable<MethodSignature>
 
 	public override int GetHashCode() => HashCode.Combine( _name, _types );
 
-	public static MethodSignature From( string methodName, ScriptMethod method ) =>
-		new(methodName, method.Parameters.Select( parameter => parameter.Item2 ).ToList());
+	public static MethodSignature From( string methodName, ScriptMethod method )
+	{
+		var parameterTypes = ImmutableArray.CreateBuilder<ITypeProvider>();
+		foreach ( var parameter in method.Parameters )
+			parameterTypes.Add( parameter.Item2 );
+
+		return new MethodSignature( methodName, parameterTypes.ToImmutable() );
+	}
 
 	public static MethodSignature From( ScriptMethod method ) => From( method.Name, method );
 
-	public static MethodSignature From( MethodDeclarationAst methodDeclaration ) =>
-		new(methodDeclaration.MethodName, methodDeclaration.ParameterAsts.Select( parameter => parameter.ParameterTypeAst.TypeProvider ).ToList());
+	public static MethodSignature From( MethodDeclarationAst methodDeclaration )
+	{
+		var parameterTypes = ImmutableArray.CreateBuilder<ITypeProvider>();
+		foreach ( var parameter in methodDeclaration.ParameterAsts )
+			parameterTypes.Add( parameter.ParameterType );
+
+		return new MethodSignature( methodDeclaration.MethodName, parameterTypes.ToImmutable() );
+	}
 
 	public static MethodSignature From( MethodCallAst methodCall ) =>
 		new(methodCall.MethodName, methodCall.ArgumentTypes);
