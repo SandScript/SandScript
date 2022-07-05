@@ -1,49 +1,20 @@
-﻿using System;
-using System.Collections.Immutable;
-using System.Diagnostics;
+﻿using System.Collections.Immutable;
 using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript;
 
 public sealed class Parser
 {
-
-	private ImmutableArray<Token> _tokens;
+	private readonly ImmutableArray<Token> _tokens;
 	private int _tokenPosition;
 
 	private Token CurrentToken => PeekToken( 0 );
 	
 	private readonly ParserDiagnostics _diagnostics = new();
 
-	private Parser()
+	private Parser( ImmutableArray<Token> tokens )
 	{
-	}
-
-	private Parser( Lexer lexer )
-	{
-		var tokens = ImmutableArray.CreateBuilder<Token>();
-
-		do
-		{
-			tokens.Add( lexer.GetNextToken() );
-		} while ( tokens[^1].Type != TokenType.Eof );
-
-		_tokens = tokens.ToImmutable();
-	}
-	
-	StageResult IStage.Run( Script owner, object?[] arguments )
-	{
-		if ( arguments.Length < 1 || arguments[0] is not ImmutableArray<Token> tokens )
-			throw new ArgumentException( null, nameof(arguments) );
-
-		var sw = Stopwatch.StartNew();
 		_tokens = tokens;
-		_tokenPosition = 0;
-		var ast = Parse();
-		sw.Stop();
-		
-		_diagnostics.Time( sw.Elapsed.TotalMilliseconds );
-		return _diagnostics.Errors.Count == 0 ? StageResult.Success( ast ) : StageResult.Fail( ast );
 	}
 
 	private ProgramAst Parse()
@@ -411,8 +382,12 @@ public sealed class Parser
 		return noop;
 	}
 
-	public static ProgramAst Parse( string text, bool lexNonEssentialTokens )
+	public static ProgramAst Parse( ImmutableArray<Token> tokens ) => Parse( tokens, out _ );
+	public static ProgramAst Parse( ImmutableArray<Token> tokens, out StageDiagnostics diagnostics )
 	{
-		return new Parser( new Lexer( text, lexNonEssentialTokens ) ).Parse();
+		var parser = new Parser( tokens );
+		var programAst = parser.Parse();
+		diagnostics = parser._diagnostics;
+		return programAst;
 	}
 }
