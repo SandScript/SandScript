@@ -5,12 +5,8 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace SandScript;
 
-public sealed class Lexer : IStage
+public sealed class Lexer
 {
-	StageDiagnostics IStage.Diagnostics => Diagnostics;
-	Type? IStage.PrerequisiteStage => null;
-	Type? IStage.SortBeforeStage => null;
-
 	public readonly LexerDiagnostics Diagnostics = new();
 
 	public string Text { get; private set; } = string.Empty;
@@ -32,30 +28,6 @@ public sealed class Lexer : IStage
 		Init( text, lexNonEssentialTokens );
 	}
 
-	StageResult IStage.Run( Script owner, object?[] arguments )
-	{
-		if ( arguments.Length < 2 || arguments[0] is not string text || arguments[1] is not bool lexNonEssentialTokens )
-			throw new ArgumentException( null, nameof(arguments) );
-
-		var sw = Stopwatch.StartNew();
-		
-		if ( !Init( text, lexNonEssentialTokens ) )
-			return StageResult.Fail();
-
-		var tokens = ImmutableArray.CreateBuilder<Token>();
-
-		do
-		{
-			tokens.Add( GetNextToken() );
-		} while ( tokens[^1].Type != TokenType.Eof );
-		
-		sw.Stop();
-		
-		Diagnostics.Time( sw.Elapsed.TotalMilliseconds );
-		return Diagnostics.Errors.Count == 0
-			? StageResult.Success( tokens.ToImmutable() )
-			: StageResult.Fail( tokens.ToImmutable() );
-	}
 	
 	private bool Init( string text, bool lexNonEssentialTokens )
 	{

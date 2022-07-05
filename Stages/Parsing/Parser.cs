@@ -5,11 +5,8 @@ using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript;
 
-public sealed class Parser : IStage
+public sealed class Parser
 {
-	StageDiagnostics IStage.Diagnostics => _diagnostics;
-	Type IStage.PrerequisiteStage => typeof(Lexer);
-	Type? IStage.SortBeforeStage => null;
 
 	private ImmutableArray<Token> _tokens;
 	private int _tokenPosition;

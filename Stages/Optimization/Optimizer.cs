@@ -5,12 +5,8 @@ using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript;
 
-public sealed class Optimizer : NodeVisitor<Ast>, IStage
+public sealed class Optimizer : NodeVisitor<Ast>
 {
-	StageDiagnostics IStage.Diagnostics => _diagnostics;
-	Type IStage.PrerequisiteStage => typeof(SemanticAnalyzer);
-	Type? IStage.SortBeforeStage => null;
-
 	private readonly VariableManager<MethodSignature, bool> _removedMethods =
 		new(new IgnoreHashCodeComparer<MethodSignature>());
 
@@ -20,23 +16,6 @@ public sealed class Optimizer : NodeVisitor<Ast>, IStage
 
 	private Optimizer()
 	{
-	}
-	
-	StageResult IStage.Run( Script owner, object?[] arguments )
-	{
-		if ( arguments.Length < 1 || arguments[0] is not Ast ast )
-			throw new ArgumentException( null, nameof(arguments) );
-
-		var sw = Stopwatch.StartNew();
-		_numChanges = 0;
-		var optimizedAst = OptimizeTree( ast );
-		sw.Stop();
-		
-		_diagnostics.Time( sw.Elapsed.TotalMilliseconds );
-		if ( _diagnostics.Errors.Count != 0 )
-			return StageResult.Fail( optimizedAst );
-
-		return _numChanges > 0 ? StageResult.NeedsRepeating( optimizedAst ) : StageResult.Success( optimizedAst );
 	}
 
 	private Ast OptimizeTree( Ast ast )

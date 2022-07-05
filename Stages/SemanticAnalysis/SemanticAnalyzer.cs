@@ -6,12 +6,8 @@ using SandScript.AbstractSyntaxTrees;
 
 namespace SandScript;
 
-public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
+public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>
 {
-	StageDiagnostics IStage.Diagnostics => _diagnostics;
-	Type IStage.PrerequisiteStage => typeof(Parser);
-	Type? IStage.SortBeforeStage => null;
-
 	internal readonly VariableManager<string, ITypeProvider> VariableTypes = new(null);
 	internal readonly VariableManager<MethodSignature, ScriptMethod> VariableMethods =
 		new(new IgnoreHashCodeComparer<MethodSignature>());
@@ -35,19 +31,6 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>, IStage
 			VariableTypes.Root.AddOrUpdate( variable.Name, variable.TypeProvider );
 			_variableExternals.Root.AddOrUpdate( variable.Name, variable );
 		}
-	}
-	
-	StageResult IStage.Run( Script owner, object?[] arguments )
-	{
-		if ( arguments.Length < 1 || arguments[0] is not Ast ast )
-			throw new ArgumentException( null, nameof(arguments) );
-
-		var sw = Stopwatch.StartNew();
-		var result = AnalyzeTree( ast );
-		sw.Stop();
-		
-		_diagnostics.Time( sw.Elapsed.TotalMilliseconds );
-		return result ? StageResult.Success( ast ) : StageResult.Fail( ast );
 	}
 
 	private bool AnalyzeTree( Ast ast )
