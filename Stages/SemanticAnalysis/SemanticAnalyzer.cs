@@ -85,7 +85,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>
 		var variableName = assignmentAst.VariableName;
 		if ( !VariableTypes.Current.TryGetValue( variableName, out var type ) )
 		{
-			Diagnostics.Undefined( variableName );
+			Diagnostics.Undefined( variableName, assignmentAst.StartLocation );
 			return TypeProviders.Builtin.Nothing;
 		}
 
@@ -217,7 +217,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>
 		var callSignature = MethodSignature.From( methodCallAst );
 		if ( !VariableMethods.Current.TryGetValue( callSignature, out var method ) )
 		{
-			Diagnostics.Undefined( callSignature.ToString() );
+			Diagnostics.Undefined( callSignature.ToString(), methodCallAst.StartLocation );
 			return TypeProviders.Builtin.Nothing;
 		}
 		
@@ -280,7 +280,7 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>
 		var variableName = variableAst.VariableName;
 		if ( !VariableTypes.Current.TryGetValue( variableName, out var variableType ) )
 		{
-			Diagnostics.Undefined( variableName );
+			Diagnostics.Undefined( variableName, variableAst.StartLocation );
 			return TypeProviders.Builtin.Nothing;
 		}
 
