@@ -20,12 +20,12 @@ public class Script
 	}
 
 	internal delegate void MethodAddedEventHandler( Script sender, ScriptMethod method );
-	internal event MethodAddedEventHandler MethodAdded;
+	internal event MethodAddedEventHandler? MethodAdded;
 	internal IEnumerable<ScriptMethod> CustomMethods => _customMethodCache;
 	private readonly List<ScriptMethod> _customMethodCache = new();
 
 	internal delegate void VariableAddedEventHandler( Script sender, ScriptVariable variable );
-	internal event VariableAddedEventHandler VariableAdded;
+	internal event VariableAddedEventHandler? VariableAdded;
 	internal IEnumerable<ScriptVariable> CustomVariables => _customVariableCache;
 	private readonly List<ScriptVariable> _customVariableCache = new();
 
