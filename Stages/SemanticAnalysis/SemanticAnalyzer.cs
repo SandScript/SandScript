@@ -5,6 +5,8 @@ namespace SandScript;
 
 public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>
 {
+	private readonly Script? _owner;
+	
 	internal readonly VariableManager<string, ITypeProvider> VariableTypes = new(null);
 	internal readonly VariableManager<MethodSignature, ScriptMethod> VariableMethods =
 		new(new IgnoreHashCodeComparer<MethodSignature>());
@@ -16,18 +18,43 @@ public sealed class SemanticAnalyzer : NodeVisitor<ITypeProvider>
 
 	internal SemanticAnalyzer()
 	{
-		foreach ( var method in SandScript.CustomMethods )
-		{
-			var methodSignature = MethodSignature.From( method );
-			VariableTypes.Root.AddOrUpdate( methodSignature.ToString(), TypeProviders.Builtin.Method );
-			VariableMethods.Root.AddOrUpdate( methodSignature, method );
-		}
+		_owner = null;
+	}
 
-		foreach ( var variable in SandScript.CustomVariables )
-		{
-			VariableTypes.Root.AddOrUpdate( variable.Name, variable.TypeProvider );
-			_variableExternals.Root.AddOrUpdate( variable.Name, variable );
-		}
+	internal SemanticAnalyzer( Script owner )
+	{
+		_owner = owner;
+		
+		foreach ( var method in owner.CustomMethods )
+			OwnerOnMethodAdded( owner, method );
+
+		foreach ( var variable in owner.CustomVariables )
+			OwnerOnVariableAdded( owner, variable );
+		
+		owner.MethodAdded += OwnerOnMethodAdded;
+		owner.VariableAdded += OwnerOnVariableAdded;
+	}
+
+	~SemanticAnalyzer()
+	{
+		if ( _owner is null )
+			return;
+		
+		_owner.MethodAdded -= OwnerOnMethodAdded;
+		_owner.VariableAdded -= OwnerOnVariableAdded;
+	}
+
+	private void OwnerOnMethodAdded( Script sender, ScriptMethod method )
+	{
+		var methodSignature = MethodSignature.From( method );
+		VariableTypes.Root.AddOrUpdate( methodSignature.ToString(), TypeProviders.Builtin.Method );
+		VariableMethods.Root.AddOrUpdate( methodSignature, method );
+	}
+	
+	private void OwnerOnVariableAdded( Script sender, ScriptVariable variable )
+	{
+		VariableTypes.Root.AddOrUpdate( variable.Name, variable.TypeProvider );
+		_variableExternals.Root.AddOrUpdate( variable.Name, variable );
 	}
 
 	public bool AnalyzeAst( Ast ast )
