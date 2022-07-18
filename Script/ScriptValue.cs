@@ -65,13 +65,16 @@ public sealed class ScriptValue
 
 	public static ScriptValue From<T>( T value )
 	{
-		if ( value is null )
-			return new ScriptValue( null );
-
-		if ( value is ScriptVariable )
-			return new ScriptValue( value );
+		switch ( value )
+		{
+			case null:
+			case ScriptVariable:
+				return new ScriptValue( value );
+			case ScriptValue sv:
+				return sv;
+		}
 		
-		var provider = TypeProviders.GetByBackingType( value.GetType() );
+		var provider = TypeProviders.GetByValue( value );
 		if ( provider is not null )
 			return new ScriptValue( value );
 		
