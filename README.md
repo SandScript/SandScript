@@ -23,8 +23,15 @@ This project is by no means production ready. It has many missing analysis steps
 
 ## Planned Features
 
-* Standard library of procedures available to SandScript
-* 
+* Standard library of methods available to SandScript
+* Dot (.) operator for accessors and static object traversal (I.E. namespace.method).
+* Fleshed out optimization pass to eliminate dead code and unused variables/methods.
+
+## Known Issues
+
+* Nested method calls will fail at Semantic Analysis.
+* Semantic Analysis does not check that all code paths return a value in cases where it is required.
+* Overall, Semantic Analysis is missing many checks.
 
 ## Contributing
 
