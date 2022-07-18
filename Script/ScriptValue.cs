@@ -31,7 +31,7 @@ public sealed class ScriptValue
 		else
 		{
 			Type = value is null ? TypeProviders.Builtin.Nothing.BackingType : value.GetType();
-			TypeProvider = TypeProviders.GetByType( Type )!;
+			TypeProvider = TypeProviders.GetByBackingType( Type )!;
 		}
 		
 		_value = value;
@@ -71,7 +71,7 @@ public sealed class ScriptValue
 		if ( value is ScriptVariable )
 			return new ScriptValue( value );
 		
-		var provider = TypeProviders.GetByType( value.GetType() );
+		var provider = TypeProviders.GetByBackingType( value.GetType() );
 		if ( provider is not null )
 			return new ScriptValue( value );
 		

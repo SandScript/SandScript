@@ -59,15 +59,15 @@ public static class TypeProviders
 		return null;
 	}
 
-	public static ITypeProvider? GetByType( Type backingType )
+	public static ITypeProvider? GetByBackingType( Type backingType )
 	{
 		if ( backingType == typeof(ScriptValue) )
 			return Builtin.Variable;
 
-		foreach ( var type in Types )
+		foreach ( var typeProvider in Types )
 		{
-			if ( type.BackingType == backingType )
-				return type;
+			if ( typeProvider.BackingType == backingType )
+				return typeProvider;
 		}
 
 		return null;
@@ -75,7 +75,7 @@ public static class TypeProviders
 
 	public static ITypeProvider? GetByValue( object? value )
 	{
-		return value is null ? Builtin.Nothing : GetByType( value.GetType() );
+		return value is null ? Builtin.Nothing : GetByBackingType( value.GetType() );
 	}
 
 	public static class Builtin

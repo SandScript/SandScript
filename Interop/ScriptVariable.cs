@@ -16,7 +16,7 @@ public sealed class ScriptVariable
 	{
 		Name = attribute.VariableName;
 		Property = propertyInfo;
-		TypeProvider = TypeProviders.GetByType( propertyInfo.PropertyType )!;
+		TypeProvider = TypeProviders.GetByBackingType( propertyInfo.PropertyType )!;
 
 		CanRead = attribute.CanRead;
 		CanWrite = attribute.CanWrite;

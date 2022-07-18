@@ -24,7 +24,7 @@ public class Script
 		if ( Analyzer.VariableTypes.Root.ContainsKey( varName ) )
 			throw new GlobalRedefinedException( varName );
 
-		var valueTypeProvider = TypeProviders.GetByType( value.Type );
+		var valueTypeProvider = TypeProviders.GetByBackingType( value.Type );
 		if ( valueTypeProvider is null )
 			throw new TypeUnsupportedException( value.Type );
 		

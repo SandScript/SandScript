@@ -37,7 +37,7 @@ public class ScriptMethod : IEquatable<ScriptMethod>
 	internal ScriptMethod( MethodInfo methodInfo, ScriptMethodAttribute attribute )
 	{
 		Name = attribute.MethodName;
-		ReturnTypeProvider = TypeProviders.GetByType( methodInfo.ReturnType )!;
+		ReturnTypeProvider = TypeProviders.GetByBackingType( methodInfo.ReturnType )!;
 
 		_isCsMethod = true;
 		MethodInfo = methodInfo;
@@ -48,7 +48,7 @@ public class ScriptMethod : IEquatable<ScriptMethod>
 		for ( var i = 1; i < methodParameters.Length; i++ )
 		{
 			var parameter = methodParameters[i];
-			parameters.Add( (parameter.Name!, TypeProviders.GetByType( parameter.ParameterType )!) );
+			parameters.Add( (parameter.Name!, TypeProviders.GetByBackingType( parameter.ParameterType )!) );
 		}
 		Parameters = parameters;
 		
