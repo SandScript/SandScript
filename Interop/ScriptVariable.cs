@@ -25,11 +25,11 @@ public sealed class ScriptVariable
 
 	public object? GetValue()
 	{
-		return Property.GetGetMethod()!.Invoke( null, null );
+		return _property.GetValue( null );
 	}
 
 	public void SetValue( object? value )
 	{
-		Property.GetSetMethod()!.Invoke( null, new[] {value} );
+		_property.SetValue( null, value );
 	}
 }
